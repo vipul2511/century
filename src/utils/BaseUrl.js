@@ -1,0 +1,1 @@
+ export const BASE_URL="http://demo.3ptec.com";

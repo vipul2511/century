@@ -39,6 +39,9 @@ import BillingOutlet from '../scenes/Chart/BillingOutlet';
 import DateWiseReport from '../MainScreen/DateWiseReport';
 import OpenPurchase from '../MainScreen/OpenPurchase';
 import OpenPurchaseChildScreen from '../MainScreen/OpenPurchaseChildData';
+import CreateOrder from '../MainScreen/createOrder';
+import GSTBilling from '../MainScreen/GSTBilling';
+import Search from '../utils/Search';
 let username;
 
 const Stack = createStackNavigator();
@@ -78,6 +81,9 @@ function Root(props)
  <Stack.Screen name="DateWiseReport" component={DateWiseReport} options={{ headerShown: false }} />
  <Stack.Screen name="OpenPurchase" component={OpenPurchase} options={{ headerShown: false }} />
  <Stack.Screen name="OpenPurchaseChildScreen" component={OpenPurchaseChildScreen} options={{ headerShown: false }} />
+ <Stack.Screen name="CreateOrder" component={CreateOrder} options={{ headerShown: false }} />
+ <Stack.Screen name="GSTBilling" component={GSTBilling} options={{ headerShown: false }} />
+ <Stack.Screen name="Search" component={Search} options={{ headerShown: false }} />
   </Stack.Navigator>
 
     )

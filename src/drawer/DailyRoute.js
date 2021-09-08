@@ -7,6 +7,7 @@ import {Picker} from '@react-native-picker/picker';
 import { Table, TableWrapper, Row, Cell } from 'react-native-table-component';
 import { CommonActions } from '@react-navigation/native';
 import { wp } from '../utils/heightWidthRatio';
+import {BASE_URL} from '../utils/BaseUrl';
 export default class DailyRoute extends Component{
     constructor(props){
         super(props);
@@ -71,7 +72,7 @@ createTwoButtonAlert = () =>
 
 }
 dataFetchStockItem=()=>{
-  var EditProfileUrl = `http://demo.3ptec.com/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=500&selEntityId=${this.state.orgId}&selEntityType=superstockist&reportDataSource=FetchEntityCustomersDetail`
+  var EditProfileUrl = `${BASE_URL}/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=500&selEntityId=${this.state.orgId}&selEntityType=superstockist&reportDataSource=FetchEntityCustomersDetail`
   console.log('Add product Url:' + EditProfileUrl)
   fetch(EditProfileUrl,  {
     method: 'Post',

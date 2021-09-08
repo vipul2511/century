@@ -8,6 +8,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Table, Row, Rows } from 'react-native-table-component';
 import moment from 'moment';
 import { wp, hp } from '../utils/heightWidthRatio';
+import Spinner from 'react-native-loading-spinner-overlay';
+import { Picker } from '@react-native-picker/picker';
+import {BASE_URL} from '../utils/BaseUrl';
 let width=Dimensions.get('window').width;
 export default class StockTable extends Component{
     constructor(props){
@@ -26,8 +29,7 @@ export default class StockTable extends Component{
               token:'',
               noMoreLoad:true,
               time:'',
-              
-
+              spinner:false,
         }
         let onEndReached = false;
         this.backItems= this.backItems.bind(this);
@@ -60,15 +62,12 @@ export default class StockTable extends Component{
       this.onEndReached = true
       }
     };
-// data=()=>{
-//   firebase.database().ref('Stock/').push({
-//       StockName:this.state.text
-//   }).then((data)=>{
-//       console.log('data',data)
-//   }).catch((err)=>{
-//       console.log('error',err);
-//   });
-// }
+    showLoading() {
+      this.setState({ spinner: true })
+    }
+    hideLoading() {
+      this.setState({ spinner: false })
+    }
 componentWillUnmount(){
   BackHandler.removeEventListener('hardwareBackPressed',this.backItems)
  }
@@ -91,26 +90,47 @@ getDatafromFirebase=()=>{
     console.log('the time',time);
   })
   firebase.database().ref('CustomerMasterTable/data/').on('value',(snap) =>{
-    let items =this.state.tableData;
-    snap.forEach((child)=>{
-      items.push({
-        item_description:child.val().itemdescription,
-        item_group:child.val().itemgroup,
-        bookedqty:child.val().bookedqty,
-        reorderlevel:child.val().reorderlevel,
-        updatedate:child.val().updatedate,
-        name:child.val().itemname,
-        pkgunit:child.val().pkgunit,
-        instockqty:child.val().instockqty,
-        orgid:child.val().orgid
+    let items = [];
+      let objArr = [];
+      snap.forEach((child) => {
+        let obj =
+        {
+          item_description: child.val().itemdescription,
+          item_group: child.val().itemgroup,
+          bookedqty: child.val().bookedqty,
+          reorderlevel: child.val().reorderlevel,
+          updatedate: child.val().updatedate,
+          name: child.val().itemname,
+          pkgunit: child.val().pkgunit,
+          childunit: child.val().childpkgunit,
+          instockqty: child.val().instockqty,
+          orgid: child.val().orgid,
+        }
+        items.push(obj);
+        objArr.push(obj)
       });
-    });
-    console.log(items);
-    this.setState({masterlist:items});
-    this.setState({tableData:items})
-    this.setState({loading:false});
-    console.log('report',this.state.tableData.length);
-    console.log('re loaded');
+      // console.log(items);
+      let newArr = [];
+      let indexValue = 0;
+      let samename = []
+      let nox = '';
+      items.map((items, index) => { // here index is the iterator
+        if (!newArr.some((item, index) => item.data.name == items.name)) {
+          newArr.push({ data: items });
+        } else {
+          samename.push(items);
+        }
+      });
+      samename.map((item, index) => {
+        newArr.map((items, indexs) => {
+          if (samename[index].name == newArr[indexs].data.name && samename[index].pkgunit !== newArr[indexs].data.pkgunit) {
+            newArr[indexs].data.newValue = item.pkgunit;
+            newArr[indexs].wholeItem = item;
+          }
+        })
+      })
+      console.log('new arr', JSON.stringify(newArr));
+      this.setState({ tableData: newArr, masterlist: newArr });
   });
 }
 
@@ -124,12 +144,7 @@ componentDidMount(){
    })
   BackHandler.addEventListener('hardwareBackPressed',this.backItems);
   this.getDatafromFirebase()
-  firebase.database().ref('CustomerMasterTable/Time').once('value',(snap)=>{
-    let mill=snap.val();
-    let time=moment(Number(mill)).format('lll');
-    this.setState({time:time});
-    console.log('the time',time);
-  })
+ 
 
 }
 storeDatainDB=(data,count,time)=>{
@@ -143,7 +158,7 @@ storeDatainDB=(data,count,time)=>{
   }
 dataFetch=()=>{
   this.setState({loading:true})
-  var EditProfileUrl = `http://demo.3ptec.com/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=100&selEntityId=${this.props.route.params.orgid}&selEntityType=superstockist&reportDataSource=FetchEntityStockItems`
+  var EditProfileUrl = `${BASE_URL}/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=100&selEntityId=${this.props.route.params.orgid}&selEntityType=superstockist&reportDataSource=FetchEntityStockItems`
   console.log('Add product Url:' + EditProfileUrl)
   fetch(EditProfileUrl,  {
     method: 'Post',
@@ -181,45 +196,32 @@ setData=(groupData)=>{
   console.log('clicked the view')
   this.setState({group:groupData,openModal:true})
 }
-renderItem = ({ item,index }) => (
+renderItem = ({ item, index }) => {
+  let objItem = item.data;
+  return (
     <View key={index}>
-     <TouchableOpacity style={{flexDirection:'row',height:'auto',}} onLongPress={()=>{this.setData(item)}}
+      <TouchableOpacity style={{ flexDirection: 'row', height: 'auto', }} onLongPress={() => { this.setData(objItem) }}
       // onPress={()=>{this.pressData(item)}}
       >
-     <View style={{width:150,alignSelf: 'stretch',flexDirection:'row'  }} >
-     <Text style={{fontSize:13,marginLeft:10,flexWrap:'wrap',marginBottom:10}}>{item.name}</Text>
-     </View>
-     <View style={{  width:100,marginLeft:10, alignSelf: 'stretch',flexDirection:'row' }} >
-     {item.instockqty.length>7?<Text style={{fontSize:13,marginLeft:10,flexWrap:'wrap',marginBottom:10}}>{item.instockqty.substring(0,7)+".."}</Text>:
-    <Text style={{fontSize:13,marginLeft:10,flexWrap:'wrap',marginBottom:10}}>{item.instockqty}</Text>}
-     </View>
-     <View style={{width:100, alignSelf: 'stretch',flexDirection:'row' }} >
-     {item.pkgunit.length>7?<Text style={{fontSize:13,marginLeft:10,flexWrap:'wrap',marginBottom:10}}>{item.pkgunit.substring(0,7)+".."}</Text>:
-    <Text style={{fontSize:13,marginLeft:10,flexWrap:'wrap',marginBottom:10}}>{item.pkgunit}</Text>}
-     </View>
-     {/* <View style={{ width:150, alignSelf: 'stretch',flexDirection:'row'  }} >
-    {item.item_description.length>10?<Text style={{fontSize:13,marginLeft:10,flexWrap:'wrap',marginBottom:10}}>{item.item_description.substring(0,10)+".."}</Text>:
-    <Text style={{fontSize:13,marginLeft:10,flexWrap:'wrap',marginBottom:10}}>{item.item_description}</Text>}
-     </View> */}
-      <View style={{  width:100, alignSelf: 'stretch',flexDirection:'row',justifyContent:'center',alignItems:'center' }} >
-     <Text style={{fontSize:13,marginLeft:10,marginBottom:10,flexWrap:'wrap',textAlign:'center'}}>{item.reorderlevel}</Text>
-     </View>
-     {/* <View style={{ width:150, alignSelf: 'stretch',flexDirection:'row' }} >
-     <Text style={{fontSize:13,marginLeft:10,flexWrap:'wrap',marginBottom:10,}}>{item.item_group}</Text>
-     </View>
-     <View style={{  width:100, alignSelf: 'stretch',flexDirection:'row' }} >
-     <Text style={{fontSize:13,marginLeft:10,marginBottom:10,flexWrap:'wrap'}}>{''}</Text>
-     </View>
-     <View style={{  width:100, alignSelf: 'stretch',flexDirection:'row' }} >
-     <Text style={{fontSize:13,marginLeft:10,marginBottom:10,flexWrap:'wrap'}}>{''}</Text>
-     </View>
-     <View style={{  width:100, alignSelf: 'stretch',flexDirection:'row' }} >
-     <Text style={{fontSize:13,marginLeft:10,marginBottom:10,flexWrap:'wrap'}}>{''}</Text>
-     </View> */}
-     </TouchableOpacity>
-         <View style={{borderWidth:0.5,backgroundColor:'black'}}></View>
+        <View style={{ width: 150, alignSelf: 'stretch', flexDirection: 'row' }} >
+
+          <Text style={{ fontSize: 13, marginLeft: 10, flexWrap: 'wrap', marginBottom: 10 }}>{objItem.name}</Text>
+        </View>
+        <View style={{ width: 80, marginLeft: 10, alignSelf: 'stretch', flexDirection: 'row' }} >
+          {objItem.instockqty.length > 7 ? <Text style={{ fontSize: 13, marginLeft: 10, flexWrap: 'wrap', marginBottom: 10 }}>{objItem.instockqty.substring(0, 7) + ".."}</Text> :
+            <Text style={{ fontSize: 13, marginLeft: 10, flexWrap: 'wrap', marginBottom: 10 }}>{objItem.instockqty}</Text>}
+        </View>
+        <View style={{ width: 80, justifyContent:'center',alignItems:'center', flexDirection: 'row' }} >
+            <Text style={{ fontSize: 13, marginLeft: 10, flexWrap: 'wrap', marginBottom: 10 }}>{objItem.pkgunit}</Text>
+        </View>
+        <View style={{ width: 100, alignSelf: 'stretch', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }} >
+          <Text style={{ fontSize: 13, marginLeft: 10, marginBottom: 10, flexWrap: 'wrap', textAlign: 'center' }}>{objItem.reorderlevel}</Text>
+        </View>
+      </TouchableOpacity>
+      <View style={{ borderWidth: 0.5, backgroundColor: 'black' }}></View>
     </View>
   );
+}
  ListHeader = () => {
     //View to set in Header
     return (
@@ -292,11 +294,15 @@ render(){
           <TouchableOpacity
             style={styles.SearchContainer}
             onPress={() => {
-              this.props.navigation.navigate('DashBoardScreen')
+              this.dataFetch()
             }}>
-                 <Ionicons name="home"  size={25} color={"#fff"} onPress={()=>{this.props.navigation.navigate('DashBoardScreen')}} />
+               <Ionicons name="sync" size={25} color="#fff" style={{marginLeft:15}} onPress={()=>{this.dataFetch()}}/>
           </TouchableOpacity>
         </View>
+        <Spinner
+          visible={this.state.spinner}
+          color='#1976D2'
+        />
         <View style={{flexDirection:'row',zIndex:2,backgroundColor:'#ffff'}}>
      
      <Text style={{fontSize:13}}>Last Refresh- {this.state.time}</Text>
@@ -317,7 +323,7 @@ render(){
          onEndReached = {() => {
           if (!this.onEndReached && this.state.noMoreLoad) {
             console.log('reached')
-               this.dataFetch();   // on End reached
+              //  this.dataFetch();   // on End reached
                 this.onEndReached = true;
           }
         }

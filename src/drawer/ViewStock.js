@@ -7,6 +7,10 @@ import Icon from 'react-native-vector-icons/Ionicons'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { wp, hp } from '../utils/heightWidthRatio';
 import moment from 'moment';
+import {BASE_URL} from '../utils/BaseUrl';
+import Database from '../utils/Database';
+import Spinner from 'react-native-loading-spinner-overlay';
+const db = new Database();
 let width=Dimensions.get('window').width;
 export default class ViewStock extends Component{
     constructor(props){
@@ -21,7 +25,10 @@ export default class ViewStock extends Component{
               orgId:'',
               token:'',
               loading:false,
-              time:''
+              time:'',
+              searchText:'',
+              spinner:false,
+              NoDataShow:false
         }
         let onEndReached = false;
         this.backItems= this.backItems.bind(this);
@@ -36,77 +43,46 @@ export default class ViewStock extends Component{
           return true;
       } 
     }
-// data=()=>{
-//   firebase.database().ref('Stock/').push({
-//       StockName:this.state.text
-//   }).then((data)=>{
-//       console.log('data',data)
-//   }).catch((err)=>{
-//       console.log('error',err);
-//   });
-// }
-searchFilterFunction = (text) => {
-  // Check if searched text is not blank
-  console.log('name',text);
-  if (text) {
-    this.onEndReached = true
-    let combineArray=this.state.tableData
-    const newData = combineArray.filter(
-      function (item) {
-        const itemData = item.name
-          ? item.name.toUpperCase()
-          : ''.toUpperCase();
-          const itemgroup=item.orggroup
-            ?item.orggroup.toUpperCase()
-                        :''.toUpperCase();
-                        const itemUnit=item.type
-                        ?item.type.toUpperCase()
-                                    :''.toUpperCase();
-        const textData = text.toUpperCase();
-        return (
-          itemData.indexOf(textData) > -1 ||
-          itemgroup.indexOf(textData) > -1 ||
-          itemUnit.indexOf(textData) > -1
-        )
-    });
-    this.setState({tableData:newData});
-  } else {
-  this.setState({tableData:this.state.masterlist});
-  this.onEndReached = true
-  }
-};
-getCustomerData=()=>{
-  firebase.database().ref('StockMaster/data/').on('value',(snap) =>{
-    let items =this.state.tableData;
-    snap.forEach((child)=>{
-      items.push({
-        city:child.val().city,
-        type:child.val().orgtypename,
-        name:child.val().name,
-        orggroup:child.val().orggroup,
-        zoneid:child.val().zoneid,
-        state:child.val().state,
-        typecus:child.val().type,
-        country:child.val().country,
-        orgid:child.val().orgid,
-        loginid:child.val().loginid,
-        emailid:child.val().emailid,
-        contactno:child.val().contactno
-      });
-    });
-    console.log(items);
-    this.setState({masterlist:items});
-    this.setState({tableData:items});
-    this.setState({loading:false});
-    console.log('report',this.state.tableData.length)
-  });
+    showLoading() {
+      this.setState({ spinner: true })
+    }
+    hideLoading() {
+      this.setState({ spinner: false })
+    }
+    searchFilterFunction = (event) => {
+      let text=event.nativeEvent.text;
+      if (text) {
+        db.searchInCustomerTable(text).then(succ=>{
+          let NoData=false;
+          if(succ.length==0) NoData=true
+          this.setState({ tableData: succ,noMoreLoad:false,NoDataShow:NoData});
+        }).catch(err=>{
+        })
+      } else {
+        this.setState({ tableData: this.state.masterlist,noMoreLoad:true });
+        this.onEndReached = true
+      }
+    };
+getCustomerData=async()=>{
+  db.retrieveCustomerTime().then(succ=>{
+    let millTime=succ[0].time;
+    let count=succ[0].count;
+    let time = moment(Number(millTime)).format('lll');
+     this.setState({time:time,totalCount:count})
+   console.log('time count',succ);
+  })
+  db.retrieveCustomer().then(table=>{
+ let NoData=false;
+ if(table.length==0) NoData=true
+ this.setState({tableData:table,masterlist:table,NoDataShow:NoData});
+  })
 }
 componentDidMount(){
   AsyncStorage.getItem('@orgid').then(id=>{
     if(id){
      this.setState({orgId:id});
     }
-  })
+  });
    AsyncStorage.getItem('@loginToken').then(succ=>{
      if(succ){
     this.setState({token:succ});
@@ -114,25 +90,22 @@ componentDidMount(){
    })
   BackHandler.addEventListener('hardwareBackPressed',this.backItems);
   this.getCustomerData();
-  firebase.database().ref('StockMaster/Totalcount').once('value',(snap)=>{
-    this.setState({totalCount:snap.val()});
-    console.log(snap.val())
-  })
-  firebase.database().ref('StockMaster/Time').once('value',(snap)=>{
-    let mill=snap.val();
-    let time=moment(Number(mill)).format('lll');
-    this.setState({time:time});
-    console.log('the time',time);
-  })
+  
 }
 pressData=(data)=>{
-  console.log(JSON.stringify(data))
   if(data.loginid==""){
     this.props.navigation.navigate('CustomerGrid',{dataItem:data})
   }else{
     this.props.navigation.navigate('ChildChart',{dataItem:data,})
   }
   
+}
+searchText=(text)=>{
+  if(text){
+    this.setState({searchText:text}) 
+  }else{
+    this.searchFilterFunction(text)
+  }
 }
 renderItem = ({ item,index }) => (
     <View key={index}>
@@ -155,15 +128,13 @@ renderItem = ({ item,index }) => (
   );
   stockDatainDB=(data,count,time)=>{
     firebase.database().ref('StockMaster/').set({data,Totalcount:count,Time:time}).then((data)=>{
-      console.log('data',data);
       this.getCustomerData()
   }).catch((err)=>{
       console.log('error',err);
   })
     }
   dataFetchStockItem=()=>{
-    var EditProfileUrl = `http://demo.3ptec.com/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=100&selEntityId=${this.state.orgId}&selEntityType=superstockist&reportDataSource=FetchEntityCustomersDetail`
-    console.log('Add product Url:' + EditProfileUrl)
+    var EditProfileUrl = `${BASE_URL}/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=100&selEntityId=${this.state.orgId}&selEntityType=superstockist&reportDataSource=FetchEntityCustomersDetail`
     fetch(EditProfileUrl,  {
       method: 'Post',
       headers:{
@@ -173,12 +144,15 @@ renderItem = ({ item,index }) => (
       .then(response => response.json())
       .then(responseData => {
         if (responseData !== 'Error - Invalid username / password') {
-          this.stockDatainDB(responseData.customerDetails.data,responseData.customerDetails.totalCount,responseData.customerDetails.serviceTimeMilliSec);
-          console.log(JSON.stringify(responseData.customerDetails.data));
+          db.insertDataCustomer(responseData.customerDetails.data).then(succ=>{
+            db.insertDataTimeStock(responseData.stockItems.totalCount,responseData.stockItems.serviceTimeMilliSec).then(succ=>{
+              alert('Synced successfully');
+            });
+          });
+          // this.stockDatainDB(responseData.customerDetails.data,responseData.customerDetails.totalCount,responseData.customerDetails.serviceTimeMilliSec);
         } else {
          console.log(responseData);
         }
-        // console.log('contact list response object:', JSON.stringify(responseData))
       })
       .catch(error => {
         //  this.hideLoading();
@@ -206,36 +180,43 @@ renderItem = ({ item,index }) => (
         
     )
   }
+  Nodata=()=>{
+    return(
+      <View style={{justifyContent:'center',alignItems:'center',marginTop:50}}>
+        {this.state.NoDataShow?<Text style={{fontWeight:'bold'}}>
+          No Data Found
+        </Text>:null}
+      </View>
+    )
+  }
 render(){
     return(
         <View style={styles.container}>
            <View style={styles.headerView}>
           <View style={styles.BackButtonContainer}>
-           
-              <Icon name="arrow-back" size={25} color={"#fff"} onPress={()=>{this.props.navigation.navigate('DashBoardScreen')}} />
-           
+              <Icon name="arrow-back" size={25} color={"#fff"} onPress={()=>{this.props.navigation.navigate('DashBoardScreen')}} />  
           </View>
           <View style={styles.TitleContainer}>
-            <View
-              >
-              {/* <Text style={styles.TitleStyle}>Century</Text> */}
-              <TextInput placeholder="Search" style={{backgroundColor:'#fff',width:wp(300),height:hp(50)}} onChangeText={(text)=>{this.searchFilterFunction(text)}}    />
+            <View>
+              <TextInput placeholder="Search" style={{backgroundColor:'#fff',width:wp(250),height:hp(50)}} onChange={this.searchFilterFunction.bind(this)} />
             </View>
           </View>
-          {/* <TouchableOpacity
+          <TouchableOpacity
             style={styles.SearchContainer}
             onPress={() => {
-              this.props.navigation.navigate('Login')
+              this.dataFetchStockItem()
             }}>
-               <Text style={styles.backButtonStyle}>Log Out</Text>
-          </TouchableOpacity> */}
+               <Icon name="sync" size={25} color="#fff" style={{marginLeft:15}} onPress={()=>{this.dataFetchStockItem()}}/>
+          </TouchableOpacity>
         </View>
+        <Spinner
+          visible={this.state.spinner}
+          color='#1976D2'
+        />
         <View>
         <View style={{flexDirection:'row'}}>
-     
           <Text style={{fontSize:13}}>Last Refresh- {this.state.time}</Text>
-          <Text style={{position:'absolute',right:5,fontWeight:'bold'}}>Total Count-{this.state.totalCount}</Text>
-      
+          <Text style={{position:'absolute',right:30,fontWeight:'bold'}}>Total Count-{this.state.totalCount}</Text>
         </View>
         </View>
             <View style={{marginTop:8,marginBottom:5,marginLeft:5,}}>
@@ -259,11 +240,12 @@ render(){
          onMomentumScrollBegin = {() => {this.onEndReached = false;}}
          numColumns={1}
          renderItem={this.renderItem}
+         ListEmptyComponent={this.Nodata}
          ListFooterComponent={this.BottomView}
          onEndReached = {() => {
           if (!this.onEndReached) {
             console.log('reached')
-               this.dataFetchStockItem();   // on End reached
+              //  this.dataFetchStockItem();   // on End reached
                 this.onEndReached = true;
           }
         }
@@ -278,7 +260,7 @@ const styles = StyleSheet.create({
     head: { height: 40, backgroundColor: '#f1f8ff' },
     text: { margin: 6 },
     SearchContainer: {
-      flex: 0.2,
+      // flex: 0.2,
       backgroundColor: '#1976D2',
     },
     LogoIconStyle: {

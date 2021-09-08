@@ -19,6 +19,7 @@ import {ProgressChart} from 'react-native-chart-kit';
 import { wp, hp } from '../../utils/heightWidthRatio';
 import { CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {BASE_URL} from '../../utils/BaseUrl';
 let width=Dimensions.get('window').width;
 let height=Dimensions.get('window').height;
 export default class BillingOutlet extends React.Component {
@@ -74,7 +75,7 @@ salesReportData=(startdate,enddate)=>{
   let endDate=JSON.stringify(enddate);
   let customerId=JSON.stringify(this.props.route.params.dataItem.orgid);
   console.log('start date',startDate,'end date',endDate);
-  var EditProfileUrl = `http://demo.3ptec.com/dms-demo/DmsCommonReport?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&reportDataSource=no-invoice-customers&reportInputFieldsData={"selZoneId":${this.state.zoneid},"childZoneFlag": "true","AllHierarchyFlag": "false","selCustomerType": "All","selCustomerId":${customerId} ,"selStartDateNum": ${startDate},"selEndDateNum": ${endDate},"fetchDataSource": "report-runtime-data","timeoffset": 330}`
+  var EditProfileUrl = `${BASE_URL}/dms-demo/DmsCommonReport?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&reportDataSource=no-invoice-customers&reportInputFieldsData={"selZoneId":${this.state.zoneid},"childZoneFlag": "true","AllHierarchyFlag": "false","selCustomerType": "All","selCustomerId":${customerId} ,"selStartDateNum": ${startDate},"selEndDateNum": ${endDate},"fetchDataSource": "report-runtime-data","timeoffset": 330}`
   console.log('Add product Url:' + EditProfileUrl)
   fetch(EditProfileUrl,  {
     method: 'Post',

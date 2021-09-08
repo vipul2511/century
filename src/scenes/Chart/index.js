@@ -19,6 +19,7 @@ import firebase from '../../utils/firebase';
 import PropTypes from 'prop-types'
 import Spinner from 'react-native-loading-spinner-overlay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {BASE_URL} from '../../utils/BaseUrl';
 let width=Dimensions.get('window').width;
 let height=Dimensions.get('window').height;
 export default class Chart extends React.Component {
@@ -139,8 +140,8 @@ export default class Chart extends React.Component {
     let startDate=JSON.stringify(startdate);
     let endDate=JSON.stringify(enddate);
     let type=JSON.stringify(this.state.type);
-    console.log('start date',startDate,'end date',endDate);
-    var EditProfileUrl = `http://demo.3ptec.com/dms-demo/DmsCommonReport?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&reportDataSource=mobile-entity-dashboard-fetch&reportInputFieldsData={"AllHierarchyFlag" : "false" , "movertype" : "All" , "selEndDateNum" : ${endDate} , "selCustomerId" : "All" , "timeoffset" : "330" , "selStartDateNum" : ${startDate} , "selZoneId" : ${this.state.zoneid} , "selEntityType" : ${type} , "childZoneFlag" : "true" , "selEntityId" : ${this.state.orgId} , "fetchDataSource" : "report-runtime-data" , "selCustomerType" : "All" , "dashboardReportFields" : [ "reach-range-chart" , "slow-fast-movers-report" , "sales-report"]}`
+    // console.log('start date',startDate,'end date',endDate);
+    var EditProfileUrl = `${BASE_URL}/dms-demo/DmsCommonReport?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&reportDataSource=mobile-entity-dashboard-fetch&reportInputFieldsData={"AllHierarchyFlag" : "false" , "movertype" : "All" , "selEndDateNum" : ${endDate} , "selCustomerId" : "All", "timeoffset" : "330" , "selStartDateNum" : ${startDate} , "selZoneId" : ${this.state.zoneid} , "selEntityType" : ${type} , "childZoneFlag" : "true" , "selEntityId" : ${this.state.orgId} , "fetchDataSource" : "report-runtime-data" , "selCustomerType" : "All" , "dashboardReportFields" : [ "reach-range-chart" , "slow-fast-movers-report" , "sales-report"]}`
     console.log('Add product Url:' + EditProfileUrl)
     fetch(EditProfileUrl,  {
       method: 'Post',
@@ -154,14 +155,10 @@ export default class Chart extends React.Component {
           if(responseData!=="No Data Found"){
             if(responseData!="lstDbReportChildEntities is null / empty"){
               let slowArr=responseData.slowFastMoverData.length;
-              console.log('slow arr',slowArr);
-              console.log('slow arr',responseData,'dial range graph',Array.isArray(responseData.reachrangeData));
               if(Array.isArray(responseData.reachrangeData)==false){
-                console.log('the data is coming ',responseData.reachrangeData.rangePercentage)
                 this.setState({value:responseData.reachrangeData.rangePercentage})
               }
               if (slowArr!=0) {
-                console.log(JSON.stringify(responseData));
                 let salesGraphData=responseData.entitySalesData;
                 let salesmonth1=0;
                 let salesmonth2=0;
@@ -193,7 +190,7 @@ export default class Chart extends React.Component {
                       
                      
                 });
-                console.log('data value',valuesDate);
+                // console.log('data value',valuesDate);
                 let data= {
                   dataSets: [{
                     values:valuesDate ,
@@ -230,7 +227,7 @@ export default class Chart extends React.Component {
                 dataofPieChart.map((item,index)=>{
                   totalCount=totalCount+item.itemsCount;
                 });
-                console.log('item of pie chart',totalCount)
+                // console.log('item of pie chart',totalCount)
                 let finalValue;
                 let mediumValue;
                 let slowvalue;
@@ -239,19 +236,19 @@ export default class Chart extends React.Component {
                     let value=items.itemsCount/totalCount*100;
                     fastsalesItem=items.salesItems;
                     finalValue=value.toFixed(2);
-                    console.log('item of pie chart',finalValue);
+                    // console.log('item of pie chart',finalValue);
                   }
                   if(items.type=="Medium-Movers"){
                     let value=items.itemsCount/totalCount*100;
                     mediumValue=value.toFixed(2);
                     mediumSalesItem=items.salesItems;
-                    console.log('item of pie chart',mediumValue);
+                    // console.log('item of pie chart',mediumValue);
                   }
                   if(items.type=="Slow-Movers"){
                     let value=items.itemsCount/totalCount*100;
                     saleItemSlow=items.salesItems;
                     slowvalue=value.toFixed(2);
-                    console.log('item of pie chart',slowvalue);
+                    // console.log('item of pie chart',slowvalue);
                   }
                 });
                 this.setState({fastsalesItem:fastsalesItem,mediumSalesItem:mediumSalesItem,saleItemSlow:saleItemSlow})
@@ -345,11 +342,9 @@ export default class Chart extends React.Component {
       { cancelable: false }
     );
     millsecond=()=>{
-      this.showLoading();
+this.showLoading();
       var d = new Date();
-console.log(d.toLocaleDateString());
-d.setMonth(d.getMonth() - 3);
-console.log(d.toLocaleDateString());
+d.setMonth(d.getMonth() - 6);
 let timebeforemonth = new Date(d.toLocaleDateString()).getTime(); 
 let timebefore3month=JSON.stringify(timebeforemonth);
 console.log('3 before current millsecond',timebefore3month);
@@ -471,34 +466,10 @@ console.log('current millsecond',time3month);
           color='#1976D2'
         />
         <ScrollView>
-            {/* <TouchableOpacity style={{justifyContent:'center',alignItems:'center'}} onPress={this.millsecond}>
-          <Text>h</Text>
-            </TouchableOpacity> */}
           <View style={{justifyContent:'center',alignItems:'center'}}>
             <Text style={{fontWeight:'bold',fontSize:17}}>Sales</Text>
             </View>
         <View style={styles.container}>
-
-          {/* <LineChart    style={{width:width,height:hp(350)}}
-            data={ {
-              dataSets: [
-                  {
-                    label:"Dec,Jan,Feb",
-                      values: this.state.lineValue,
-
-                      config: {
-
-                        valueTextSize: 20,
-                        valueTextColor: processColor('#1976D3')
-                      }
-                  },
-                  
-              ],
-              
-          }}
-          chartDescription={descStyle}
-          
-          /> */}
           {this.renderBar()}
         </View>
         <View style={{justifyContent:'center',alignItems:'center',marginTop:10}}>
@@ -525,26 +496,8 @@ console.log('current millsecond',time3month);
             <RNSpeedometer value={this.state.valueAvailability} size={200}  />
             <Text style={{marginLeft:wp(45),marginTop:2,fontWeight:'bold',fontSize:25}}>%</Text>
             </View>
-        {/* {this.renderBar()} */}
-        {/* <View style={{justifyContent:'center',alignItems:'center',marginTop:10,marginBottom:10}}>
-            <Text>Progress Graph</Text>
-            </View>
-        <View>
-        <ProgressChart
-  data={data}
-  width={width}
-  height={220}
-  strokeWidth={16}
-  radius={32}
-  chartConfig={chartConfig}
-  hideLegend={false}
-/>
-        </View> */}
        </ScrollView>
         </View>
-      
-
-
     );
   }
 }

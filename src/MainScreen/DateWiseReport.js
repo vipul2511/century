@@ -6,6 +6,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { wp, hp } from '../utils/heightWidthRatio';
+import {BASE_URL} from '../utils/BaseUrl';
 let width=Dimensions.get('window').width;
 export default class DateWiseReport extends Component{
     constructor(props){
@@ -79,7 +80,7 @@ salesReportData=(startdate,enddate)=>{
   let month=JSON.stringify(this.props.route.params.month);
   let startDate=JSON.stringify(startdate);
   let endDate=JSON.stringify(enddate);
-  let token=JSON.stringify(this.props.route.params.token);
+  let token=this.props.route.params.token;
   let zoneid=this.props.route.params.zoneid;
   let invoiceDate=JSON.stringify(this.props.route.params.invoiceData.invoicedate);
   let invoicemillSec=JSON.stringify(this.props.route.params.invoiceData.invoiceMilliSec);
@@ -88,7 +89,7 @@ salesReportData=(startdate,enddate)=>{
   let entitytype=JSON.stringify(this.props.route.params.data.entity);
   let name=JSON.stringify(this.props.route.params.name);
   console.log('start date',startDate,'end date',endDate);
-  var EditProfileUrl = `http://demo.3ptec.com/dms-demo/DmsCommonReport?logintoken=${token}&sourcetype=AndroidSalesPersonApp&reportDataSource=sales-report&reportInputFieldsData={"selZoneId": ${zoneid},"childZoneFlag": "true","AllHierarchyFlag": "false","selCustomerType": ${entitytype},"selCustomerId": ${customerid},"selStartDateNum": ${startDate},"selEndDateNum": ${endDate},"fetchDataSource": "report-table-data","timeoffset": 330,"reportLevel": "Item","month": ${month},"year": "2021","entitytypename": ${type},"entityname": ${name},"invoicedate":${invoiceDate},"invoicemillisec":${invoicemillSec}}`
+  var EditProfileUrl = `${BASE_URL}/dms-demo/DmsCommonReport?logintoken=${token}&sourcetype=AndroidSalesPersonApp&reportDataSource=sales-report&reportInputFieldsData={"selZoneId": ${zoneid},"childZoneFlag": "true","AllHierarchyFlag": "false","selCustomerType": ${entitytype},"selCustomerId": ${customerid},"selStartDateNum": ${startDate},"selEndDateNum": ${endDate},"fetchDataSource": "report-table-data","timeoffset": 330,"reportLevel": "Item","month": ${month},"year": "2021","entitytypename": ${type},"entityname": ${name},"invoicedate":${invoiceDate},"invoicemillisec":${invoicemillSec}}`
   console.log('Add product Url:' + EditProfileUrl)
   fetch(EditProfileUrl,  {
     method: 'Post',
@@ -199,17 +200,17 @@ searchFilterFunction = (text) => {
   };
 renderItem = ({ item,index }) => (
     <View key={index}>
-     <TouchableOpacity style={{flexDirection:'row',height:'auto',justifyContent:'center',alignItems:'center'}} >
-       <TouchableOpacity style={{width:wp(100),alignSelf:'flex-start',flexDirection:'row'}} >
+     <View style={{flexDirection:'row',height:'auto',justifyContent:'center',alignItems:'center'}} >
+       <View style={{width:wp(100),alignSelf:'flex-start',flexDirection:'row'}} >
      <Text style={{fontSize:15,flexWrap:'wrap',marginBottom:10,textAlign:'left'}}>{item.itemDesc}</Text>
-     </TouchableOpacity>
-     <TouchableOpacity style={{width:wp(100),alignSelf:'flex-end',flexDirection:'row',justifyContent:'center',alignItems:'center'}}>
+     </View>
+     <View style={{width:wp(100),alignSelf:'flex-end',flexDirection:'row',justifyContent:'center',alignItems:'center'}}>
      <Text style={{fontSize:15,flexWrap:'wrap',marginBottom:10,textAlign:'center',}}>{item.itemQty}</Text>
-     </TouchableOpacity>
+     </View>
      <View style={{width:wp(120),alignSelf:'flex-end',flexDirection:'row',justifyContent:'flex-end',alignItems:'flex-end'}}>
      <Text style={{fontSize:15,flexWrap:'wrap',marginBottom:10,textAlign:'right'}}>{item.salesAmount}</Text>
      </View>
-     </TouchableOpacity>
+     </View>
      <View style={{borderWidth:0.5,backgroundColor:'black'}}></View>
 
     </View>

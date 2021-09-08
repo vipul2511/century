@@ -20,6 +20,7 @@ import Spinner from 'react-native-loading-spinner-overlay';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import firebase from '../../../utils/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {BASE_URL} from '../../../utils/BaseUrl';
 let width=Dimensions.get('window').width;
 let height=Dimensions.get('window').height;
 export default class ChildChart extends React.Component {
@@ -112,14 +113,14 @@ export default class ChildChart extends React.Component {
     this.setState({spinner: false})
   }
   dataFetching=(startdate,enddate)=>{
-      console.log('zone id ',this.props.route.params.dataItem.zoneid,'org id',this.props.route.params.dataItem.orgid);
+      // console.log('zone id ',this.props.route.params.dataItem.zoneid,'org id',this.props.route.params.dataItem.orgid);
       let zoneid=JSON.stringify(this.props.route.params.dataItem.zoneid);
       let orgid=JSON.stringify(this.props.route.params.dataItem.orgid);
       let type=JSON.stringify(this.props.route.params.dataItem.typecus);
     let startDate=JSON.stringify(startdate);
     let endDate=JSON.stringify(enddate);
     console.log('start date',startDate,'end date',endDate);
-    var EditProfileUrl = `http://demo.3ptec.com/dms-demo/DmsCommonReport?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&reportDataSource=mobile-entity-dashboard-fetch&reportInputFieldsData={"AllHierarchyFlag" : "false" , "movertype" : "All" , "selEndDateNum" : ${endDate} , "selCustomerId" : "All" , "timeoffset" : "330" , "selStartDateNum" : ${startDate} , "selZoneId" : ${zoneid} , "selEntityType" : ${type} , "childZoneFlag" : "true" , "selEntityId" : ${orgid} , "fetchDataSource" : "report-runtime-data" , "selCustomerType" : "All" , "dashboardReportFields" : [ "reach-range-chart" , "slow-fast-movers-report" , "sales-report"]}`
+    var EditProfileUrl = `${BASE_URL}/dms-demo/DmsCommonReport?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&reportDataSource=mobile-entity-dashboard-fetch&reportInputFieldsData={"AllHierarchyFlag" : "false" , "movertype" : "All" , "selEndDateNum" : ${endDate} , "selCustomerId" : ${orgid} , "timeoffset" : "330" , "selStartDateNum" : ${startDate} , "selZoneId" : ${zoneid} , "selEntityType" : ${type} , "childZoneFlag" : "true" , "selEntityId" : ${orgid} , "fetchDataSource" : "report-runtime-data" , "selCustomerType" : "All" , "dashboardReportFields" : [ "reach-range-chart" , "slow-fast-movers-report" , "sales-report"]}`
     console.log('Add product Url:' + EditProfileUrl)
     fetch(EditProfileUrl,  {
       method: 'Post',
@@ -141,7 +142,7 @@ export default class ChildChart extends React.Component {
                 this.setState({value:responseData.reachrangeData.rangePercentage})
               }
               if (slowArr!=0) {
-                console.log(JSON.stringify(responseData));
+                // console.log(JSON.stringify(responseData));
                 let salesGraphData=responseData.entitySalesData;
                 let salesmonth1=0;
                 let salesmonth2=0;
@@ -173,7 +174,7 @@ export default class ChildChart extends React.Component {
                       
                      
                 });
-                console.log('data value',valuesDate);
+                // console.log('data value',valuesDate);
                 let data= {
                   dataSets: [{
                     values:valuesDate ,
@@ -192,7 +193,7 @@ export default class ChildChart extends React.Component {
                   }
                 }
                 this.setState({data:data})
-                console.log(nameArray);
+                // console.log(nameArray);
                 let xAxis= {
                   valueFormatter: nameArray,
                   granularityEnabled: true,
@@ -212,7 +213,7 @@ export default class ChildChart extends React.Component {
             dataofPieChart.map((item,index)=>{
               totalCount=totalCount+item.itemsCount;
             });
-            console.log('item of pie chart',totalCount)
+            // console.log('item of pie chart',totalCount)
             let finalValue;
             let mediumValue;
             let slowvalue;
@@ -221,19 +222,19 @@ export default class ChildChart extends React.Component {
                 let value=items.itemsCount/totalCount*100;
                 fastsalesItem=items.salesItems;
                 finalValue=value.toFixed(2);
-                console.log('item of pie chart',finalValue);
+                // console.log('item of pie chart',finalValue);
               }
               if(items.type=="Medium-Movers"){
                 let value=items.itemsCount/totalCount*100;
                 mediumValue=value.toFixed(2);
                 mediumSalesItem=items.salesItems;
-                console.log('item of pie chart',mediumValue);
+                // console.log('item of pie chart',mediumValue);
               }
               if(items.type=="Slow-Movers"){
                 let value=items.itemsCount/totalCount*100;
                 saleItemSlow=items.salesItems;
                 slowvalue=value.toFixed(2);
-                console.log('item of pie chart',slowvalue);
+                // console.log('item of pie chart',slowvalue);
               }
             });
             this.setState({fastsalesItem:fastsalesItem,mediumSalesItem:mediumSalesItem,saleItemSlow:saleItemSlow})
@@ -334,7 +335,7 @@ export default class ChildChart extends React.Component {
       this.showLoading();
       var d = new Date();
 console.log(d.toLocaleDateString());
-d.setMonth(d.getMonth() - 3);
+d.setMonth(d.getMonth() - 6);
 console.log(d.toLocaleDateString());
 let timebeforemonth = new Date(d.toLocaleDateString()).getTime(); 
 let timebefore3month=JSON.stringify(timebeforemonth);
@@ -383,7 +384,7 @@ console.log('current millsecond',time3month);
     console.log('obj',obj);
     if(JSON.stringify(obj)!=JSON.stringify({})){
       console.log('working');
-      this.props.navigation.navigate('ChildDataGraph',{name:obj.data.month,data:this.state.salesfirst,zoneid:JSON.stringify(this.props.route.params.dataItem.zoneid),token:JSON.stringify(this.state.token)});
+      this.props.navigation.navigate('ChildDataGraph',{name:obj.data.month,data:this.state.salesfirst,zoneid:JSON.stringify(this.props.route.params.dataItem.zoneid),token:this.state.token,DataItem:this.props.route.params.dataItem,dataMonth:"Last 3 months",childVar:'From Child'});
     }
   }
   handleSelect(event) {

@@ -9,6 +9,7 @@ import { wp, hp } from '../utils/heightWidthRatio';
 import moment from 'moment';
 import DatePicker from 'react-native-datepicker';
 import {Picker} from '@react-native-picker/picker';
+import {BASE_URL} from '../utils/BaseUrl';
 let width=Dimensions.get('window').width;
 export default class InnerBarGraph extends Component{
     constructor(props){
@@ -102,14 +103,14 @@ salesReportData=(startdate,enddate)=>{
   let month=JSON.stringify(this.props.route.params.month);
   let startDate=JSON.stringify(startdate);
   let endDate=JSON.stringify(enddate);
-  let token=JSON.stringify(this.props.route.params.token);
+  let token=this.props.route.params.token;
   let zoneid=this.props.route.params.zoneid;
   let customerid=JSON.stringify(this.props.route.params.customerid);
   let type=JSON.stringify(this.props.route.params.data.entityType);
   let entitytype=JSON.stringify(this.props.route.params.data.entity);
   let name=JSON.stringify(this.props.route.params.name);
   console.log('start date',startDate,'end date',endDate);
-  var EditProfileUrl = `http://demo.3ptec.com/dms-demo/DmsCommonReport?logintoken=${token}&sourcetype=AndroidSalesPersonApp&reportDataSource=sales-report&reportInputFieldsData={"selZoneId": ${zoneid},"childZoneFlag": "true","AllHierarchyFlag": "false","selCustomerType": ${entitytype},"selCustomerId": ${customerid},"selStartDateNum": ${startDate},"selEndDateNum": ${endDate},"fetchDataSource": "report-table-data","timeoffset": 330,"reportLevel": "DateWise","month": ${month},"year": "2021","entitytypename": ${type},"entityname": ${name}}`
+  var EditProfileUrl = `${BASE_URL}/dms-demo/DmsCommonReport?logintoken=${token}&sourcetype=AndroidSalesPersonApp&reportDataSource=sales-report&reportInputFieldsData={"selZoneId": ${zoneid},"childZoneFlag": "true","AllHierarchyFlag": "false","selCustomerType": ${entitytype},"selCustomerId": ${customerid},"selStartDateNum": ${startDate},"selEndDateNum": ${endDate},"fetchDataSource": "report-table-data","timeoffset": 330,"reportLevel": "DateWise","month": ${month},"year": "2021","entitytypename": ${type},"entityname": ${name}}`
   console.log('Add product Url:' + EditProfileUrl)
   fetch(EditProfileUrl,  {
     method: 'Post',
@@ -234,11 +235,11 @@ renderItem = ({ item,index }) =>
        <TouchableOpacity style={{width:wp(100),alignSelf:'flex-start',flexDirection:'row'}} onPress={()=>{this.props.navigation.navigate('DateWiseReport',{name:item.customername,data:this.props.route.params.data,start:this.props.route.params.start,enddate:this.props.route.params.enddate,month:this.props.route.params.month,zoneid:this.props.route.params.zoneid,token:this.props.route.params.token,customerid:this.props.route.params.customerid,invoiceData:item,dataMonth:language})}}>
      <Text style={{fontSize:15,flexWrap:'wrap',marginBottom:10,textAlign:'left',color:'#1976D2'}}>{item.invoicedate}</Text>
      </TouchableOpacity>
-     <TouchableOpacity style={{width:wp(100),alignSelf:'flex-end',flexDirection:'row',justifyContent:'center',alignItems:'center'}}>
+     <TouchableOpacity style={{width:wp(140),alignSelf:'center',flexDirection:'row',justifyContent:'center',alignItems:'center'}}>
      <Text style={{fontSize:15,flexWrap:'wrap',marginBottom:10,textAlign:'center',}}>{item.customername}</Text>
      </TouchableOpacity>
      <View style={{width:wp(120),alignSelf:'flex-end',flexDirection:'row',justifyContent:'flex-end',alignItems:'flex-end'}}>
-     <Text style={{fontSize:15,flexWrap:'wrap',marginBottom:10,textAlign:'right'}}>{item.salesAmount}</Text>
+     <Text style={{fontSize:15,flexWrap:'wrap',marginBottom:10,textAlign:'center'}}>{item.salesAmount}</Text>
      </View>
      </TouchableOpacity>
      <View style={{borderWidth:0.5,backgroundColor:'black'}}></View>
@@ -281,10 +282,10 @@ renderItem = ({ item,index }) =>
               {this.state.Nodata==false? <View style={{flexDirection:'row',justifyContent:'center',alignItems:'center'}}>
                 <View style={{width:wp(100),alignSelf:'flex-start'}}>
                 <Text style={{fontWeight:'bold',textAlign:'left'}}>Invoice Date</Text></View>
-                <View style={{width:wp(100)}}>
-                 <Text style={{fontWeight:'bold',textAlign:'right'}}>Sales Amount</Text></View>
+                <View style={{width:wp(140)}}>
+                 <Text style={{fontWeight:'bold',textAlign:'center'}}>Customer Name</Text></View>
                  <View style={{width:wp(120)}}>
-                 <Text style={{fontWeight:'bold',textAlign:'right'}}>Sales Amount</Text></View>
+                 <Text style={{fontWeight:'bold',textAlign:'center'}}>Sales Amount</Text></View>
             </View>:null}
                 </View>
     )
@@ -425,17 +426,17 @@ render(){
     
   }>
   <Picker.Item label={this.state.defaultValue} value={this.state.defaultValue}  />
-  {this.state.defaultValue!=="Today"?<Picker.Item label="Today" value="Today" />:null}
-  {this.state.defaultValue!=="Previous Day"?<Picker.Item label="Previous Day"  value="Previous Day" />:null}
-  {this.state.defaultValue!=="Last 3 days"? <Picker.Item label="Last 3 days" value="Last 3 days" />:null}
-  {this.state.defaultValue!=="Last 5 days"?<Picker.Item label="Last 5 days" value="Last 5 days" />:null}
-  {this.state.defaultValue!=="Last week"? <Picker.Item label="Last week" value="Last week" />:null}
-  {this.state.defaultValue!=="Current month"? <Picker.Item label="Current month" value="Current month" />:null}
-  {this.state.defaultValue!=="Last month"? <Picker.Item label="Last month" value="Last month" />:null}
-  {this.state.defaultValue!=="Last 3 months"?<Picker.Item label="Last 3 months" value="Last 3 months" />:null}
-  {this.state.defaultValue!=="Last Quarter"?<Picker.Item label="Last Quarter" value="Last Quarter" />:null}
-  {this.state.defaultValue!=="Last 6 months"? <Picker.Item label="Last 6 months" value="Last 6 months" />:null}
-  <Picker.Item label="User defined date from and to date" value="User defined date from and to date" />
+              <Picker.Item label="Today" value="Today" key={0} />
+              <Picker.Item label="Previous Day" value="Previous Day" key={1} />
+              <Picker.Item label="Last 3 days" value="Last 3 days" key={2} />
+              <Picker.Item label="Last 5 days" value="Last 5 days" key={3} />
+              <Picker.Item label="Last week" value="Last week" key={4} />
+              <Picker.Item label="Current month" value="Current month" key={5} />
+              <Picker.Item label="Last month" value="Last month" key={6} />
+              <Picker.Item label="Last 3 months" value="Last 3 months" key={7} />
+              <Picker.Item label="Last Quarter" value="Last Quarter" key={8} />
+              <Picker.Item label="Last 6 months" value="Last 6 months" key={9} />
+              <Picker.Item label="User defined date from and to date" value="User defined date from and to date" key={10} />
 </Picker>
 </View>
 </View>

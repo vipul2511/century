@@ -5,9 +5,11 @@ import { Table, Row, Rows } from 'react-native-table-component';
 import resp from 'rn-responsive-font';
 import Spinner from 'react-native-loading-spinner-overlay';
 import Icon from 'react-native-vector-icons/Ionicons'
+import { CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import { wp, hp } from '../utils/heightWidthRatio';
+import {BASE_URL} from '../utils/BaseUrl';
 let width=Dimensions.get('window').width;
 export default class BPR extends Component{
     constructor(props){
@@ -32,6 +34,7 @@ export default class BPR extends Component{
     }
     componentWillUnmount(){
       BackHandler.removeEventListener('hardwareBackPressed',this.backItems);
+      this._unsubscribe();
      }
       backItems(){
         if (this.props.navigation.isFocused()) { 
@@ -75,6 +78,7 @@ searchFilterFunction = (text) => {
   }
 };
 componentDidMount(){
+  this._unsubscribe = this.props.navigation.addListener('focus', () => {
   this.showLoading()
   AsyncStorage.getItem('@loginToken').then(succ=>{
     if(succ){
@@ -97,14 +101,16 @@ componentDidMount(){
   this.dataFetchStockItem();
    }
  })
+});
   BackHandler.addEventListener('hardwareBackPressed',this.backItems);
 //   this.getCustomerData();
   
 }
 
+
+
 renderItem = ({ item,index }) => 
 {
-  console.log('item',item);
   return(
     <View key={index}>
      <TouchableOpacity style={{flexDirection:'row',height:'auto',}} onPress={()=>{this.props.navigation.navigate('OpenPurchaseChildScreen',{dataItem:this.props.route.params.dataItem,orderID:item._id.$oid})}}>
@@ -135,7 +141,7 @@ renderItem = ({ item,index }) =>
   dataFetchStockItem=()=>{
     let orgid=JSON.stringify(this.props.route.params.dataItem.orgid);
     let type=JSON.stringify(this.props.route.params.dataItem.typecus);
-    var EditProfileUrl = `http://demo.3ptec.com/dms-demo/mobile-json-data?logintoken=${JSON.stringify(this.state.token)}&sourcetype=AndroidSalesPersonApp&fileDataSource=salesorder-fetch&inputFieldsData={"selEntityId":${JSON.stringify(this.state.orgId)},"selEntityType":${JSON.stringify(this.state.type)},"selZoneId":${JSON.stringify(this.state.zoneid)},"selCustomerType": ${type},"selCustomerId":${orgid},"startIndex": "0","packetSize": "10","status": "All","timeoffset": "330"}`
+    var EditProfileUrl = `${BASE_URL}/dms-demo/mobile-json-data?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&fileDataSource=salesorder-fetch&inputFieldsData={"selEntityId":${JSON.stringify(this.state.orgId)},"selEntityType":${JSON.stringify(this.state.type)},"selZoneId":${JSON.stringify(this.state.zoneid)},"selCustomerType": ${type},"selCustomerId":${orgid},"startIndex": "0","packetSize": "5000","status": "All","timeoffset": "330"}`
     console.log('Add product Url:' + EditProfileUrl)
     fetch(EditProfileUrl,  {
       method: 'Post',
@@ -257,7 +263,7 @@ render(){
           <View style={styles.TitleContainer}>
           {this.state.NoData==false?<View>
                <TextInput placeholder="Search" style={{backgroundColor:'#fff',width:wp(250),height:hp(50)}} onChangeText={(text)=>{this.searchFilterFunction(text)}}    />
-            </View>:<View >
+            </View>:<View style={{flex:0.6}}>
               <Text style={styles.TitleStyle}>{this.props.route.params.dataItem.name}</Text>
             </View>}
           </View>
@@ -274,6 +280,7 @@ render(){
           color='#1976D2'
         />
         </View>
+        <View style={{flex:0.9}}>
             <ScrollView horizontal={true}>
          <FlatList
          keyExtractor={(item, index) => index.toString()} 
@@ -287,7 +294,15 @@ render(){
          renderItem={this.renderItem}
           />
           </ScrollView>
-        
+          </View>
+          <View style={{flex:0.1}}>
+          <View style={{justifyContent:'center',alignItems:'center',marginTop:10}}>
+      <TouchableOpacity style={{backgroundColor:'#1976D2',width:200,height:45,justifyContent:'center',alignItems:'center',borderRadius:10}}
+           onPress={()=>{this.props.navigation.navigate('CreateOrder',{dataItem:this.props.route.params.dataItem})}} >
+                <Text style={{color:'#fff',fontSize:18}}>Create Order</Text>
+                </TouchableOpacity>
+                </View> 
+          </View>
       </View>
     )
 }

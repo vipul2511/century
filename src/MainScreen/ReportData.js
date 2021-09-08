@@ -6,6 +6,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import ChildChart from '../scenes/Chart/ChildChart/childchart';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {BASE_URL} from '../utils/BaseUrl';
 export default class ReportScreen extends Component{
 state={
     text:"",
@@ -34,7 +35,7 @@ componentDidMount(){
 }
 dataFetchStockItem=()=>{
   console.log('token',this.state.token,'orgid',this.props.route.params.dataItem)
-    var EditProfileUrl = `http://demo.3ptec.com/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=100&selEntityId=${this.props.route.params.dataItem.orgid}&selEntityType=superstockist&reportDataSource=FetchEntityCustomersDetail`
+    var EditProfileUrl = `${BASE_URL}/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=100&selEntityId=${this.props.route.params.dataItem.orgid}&selEntityType=superstockist&reportDataSource=FetchEntityCustomersDetail`
     console.log('Add product Url:' + EditProfileUrl)
     fetch(EditProfileUrl,  {
       method: 'Post',

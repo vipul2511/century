@@ -7,6 +7,7 @@ import Icon from 'react-native-vector-icons/Ionicons'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { wp, hp } from '../utils/heightWidthRatio';
 import moment from 'moment';
+import {BASE_URL} from '../utils/BaseUrl';
 let width=Dimensions.get('window').width;
 export default class CustomerTable extends Component{
     constructor(props){
@@ -152,7 +153,7 @@ renderItem = ({ item,index }) => (
   })
     }
   dataFetchStockItem=()=>{
-    var EditProfileUrl = `http://demo.3ptec.com/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=100&selEntityId=${this.props.route.params.orgid}&selEntityType=superstockist&reportDataSource=FetchEntityCustomersDetail`
+    var EditProfileUrl = `${BASE_URL}/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=100&selEntityId=${this.props.route.params.orgid}&selEntityType=superstockist&reportDataSource=FetchEntityCustomersDetail`
     console.log('Add product Url:' + EditProfileUrl)
     fetch(EditProfileUrl,  {
       method: 'Post',
@@ -184,9 +185,7 @@ renderItem = ({ item,index }) => (
                 {
                     ( this.state.loading )
                     ? 
-                   
                         <ActivityIndicator size="large" color = "#1976D2" style={{marginLeft:width/2-50}} />
-                     
                     :
                         null
                 }
@@ -215,9 +214,9 @@ render(){
           <TouchableOpacity
             style={styles.SearchContainer}
             onPress={() => {
-              this.props.navigation.navigate('DashBoardScreen')
+              this.dataFetchStockItem()
             }}>
-               <Icon name="home"  size={25} color={"#fff"} onPress={()=>{this.props.navigation.navigate('DashBoardScreen')}} />
+               <Icon name="sync" size={25} color="#fff" style={{marginLeft:15}} onPress={()=>{this.dataFetchStockItem()}}/>
           </TouchableOpacity>
         </View>
         <View>
@@ -253,7 +252,7 @@ render(){
          onEndReached = {() => {
           if (!this.onEndReached) {
             console.log('reached')
-               this.dataFetchStockItem();   // on End reached
+              //  this.dataFetchStockItem();   // on End reached
                 this.onEndReached = true;
           }
         }

@@ -8,6 +8,7 @@ import { CommonActions } from '@react-navigation/native';
 import moment from 'moment';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Spinner from 'react-native-loading-spinner-overlay';
+import {BASE_URL} from '../utils/BaseUrl';
 let width=Dimensions.get('window').width;
 let height=Dimensions.get('window').height;
 import resp from 'rn-responsive-font';
@@ -34,6 +35,8 @@ class ChildDataBarGraph extends Component{
             defaultValue:" ",
             endDate:'',
             salesthird:'',
+            orgId:'',
+            type:'',
             token:'',
             legend: {
               enabled: false,
@@ -79,7 +82,19 @@ class ChildDataBarGraph extends Component{
     }
     componentDidMount() {
       this.setState({startDateValue:new Date(),endDateValue:new Date(),checkstartDate:moment().format('L'),defaultValue:this.props.route.params.dataMonth})
-        console.log('log id',this.props.route.params.token);
+        console.log('log id',this.props.route.params.DataItem);
+        AsyncStorage.getItem('@type').then(id=>{
+          if(id){
+           this.setState({type:JSON.stringify(id)});
+           console.log('type in chart',this.state.type); 
+          }
+        });
+        AsyncStorage.getItem('@orgid').then(id=>{
+          if(id){
+           this.setState({orgId:JSON.stringify(id)});
+           console.log('org id in chart',this.state.orgId); 
+          }
+        });
         AsyncStorage.getItem('@zone_id').then(id=>{
           if(id){
            this.setState({zoneid:JSON.stringify(id)});
@@ -96,7 +111,6 @@ class ChildDataBarGraph extends Component{
       }
 
       millsecond=()=>{
-       
         let name=this.props.route.params.name
         console.log(name)
         let monthNumber=new Date(Date.parse(name +" 1, 2021")).getMonth()+1
@@ -112,14 +126,23 @@ class ChildDataBarGraph extends Component{
    salesReportData=(startdate,enddate)=>{
     this.showLoading();
     this.setState({startdate:startdate,endDate:enddate});
+    let customerTy,customerId;
+    if(this.props.route.params.DataItem){
+      if(this.props.route.params.DataItem.typecus){
+      customerTy=JSON.stringify(this.props.route.params.DataItem.typecus);
+      }
+    }else{
+      customerTy=JSON.stringify("All");
+    }
+   
+      customerId=JSON.stringify("All");
      let monthName=JSON.stringify(this.props.route.params.name);
      let token=this.props.route.params.token;
      let zoneid=this.props.route.params.zoneid;
       let startDate=JSON.stringify(startdate);
       let endDate=JSON.stringify(enddate);
-      let type=JSON.stringify(this.state.type);
       console.log('start date',startDate,'end date',endDate);
-      var EditProfileUrl = `http://demo.3ptec.com/dms-demo/DmsCommonReport?logintoken=${token}&sourcetype=AndroidSalesPersonApp&reportDataSource=sales-report&reportInputFieldsData={"selZoneId": ${zoneid},"childZoneFlag": "true","AllHierarchyFlag": "false","selCustomerType": "All","selCustomerId": "All","selStartDateNum": ${startDate},"selEndDateNum": ${endDate},"fetchDataSource": "report-table-data","timeoffset": 330,"reportLevel": "EntityGroup","month": ${monthName},"year": "2021"}`
+      var EditProfileUrl = `${BASE_URL}/dms-demo/DmsCommonReport?logintoken=${token}&sourcetype=AndroidSalesPersonApp&reportDataSource=sales-report&reportInputFieldsData={"selZoneId": ${zoneid},"childZoneFlag": "true","AllHierarchyFlag": "false","selCustomerType": ${customerTy},"selCustomerId": ${customerId},"selStartDateNum": ${startDate},"selEndDateNum": ${endDate},"fetchDataSource": "report-table-data","timeoffset": 330,"reportLevel": "EntityGroup","month": ${monthName},"year": "2021"}`
       console.log('Add product Url:' + EditProfileUrl)
       fetch(EditProfileUrl,  {
         method: 'Post',
@@ -273,7 +296,9 @@ searchfun=()=>{
         let language='';
         {this.state.language!==''?language=this.state.language:language=this.state.defaultValue}
         if(JSON.stringify(obj)!=JSON.stringify({})){
-        this.props.navigation.navigate('BarChildGraph',{name:obj.data.entityType,data:obj.data,start:this.state.startdate,enddate:this.state.endDate,month:this.props.route.params.name,zoneid:this.props.route.params.zoneid,token:this.props.route.params.token,dataMonth:language});
+          let childItem;
+          if(this.props.route.params.childVar) childItem='From Child'
+        this.props.navigation.navigate('BarChildGraph',{name:obj.data.entityType,data:obj.data,start:this.state.startdate,enddate:this.state.endDate,month:this.props.route.params.name,zoneid:this.props.route.params.zoneid,token:this.props.route.params.token,dataMonth:language,DataItem:this.props.route.params.DataItem,childVar:childItem});
         }
        
       }
@@ -404,23 +429,23 @@ render(){
        this.salesReportData(JSON.stringify(startQuarter),JSON.stringify(endQuarter));
        console.log('last Quarter',start,startQuarter,end,endQuarter);
       }
-    //   console.log('item value',itemValue);
+      console.log('item value',itemValue);
     this.setState({language: itemValue})
   }
     
   }>
     <Picker.Item label={this.state.defaultValue} value={this.state.defaultValue}  />
-  {this.state.defaultValue!=="Today"?<Picker.Item label="Today" value="Today" />:null}
-  {this.state.defaultValue!=="Previous Day"?<Picker.Item label="Previous Day"  value="Previous Day" />:null}
-  {this.state.defaultValue!=="Last 3 days"? <Picker.Item label="Last 3 days" value="Last 3 days" />:null}
-  {this.state.defaultValue!=="Last 5 days"?<Picker.Item label="Last 5 days" value="Last 5 days" />:null}
-  {this.state.defaultValue!=="Last week"? <Picker.Item label="Last week" value="Last week" />:null}
-  {this.state.defaultValue!=="Current month"? <Picker.Item label="Current month" value="Current month" />:null}
-  {this.state.defaultValue!=="Last month"? <Picker.Item label="Last month" value="Last month" />:null}
-  {this.state.defaultValue!=="Last 3 months"?<Picker.Item label="Last 3 months" value="Last 3 months" />:null}
-  {this.state.defaultValue!=="Last Quarter"?<Picker.Item label="Last Quarter" value="Last Quarter" />:null}
-  {this.state.defaultValue!=="Last 6 months"? <Picker.Item label="Last 6 months" value="Last 6 months" />:null}
-  <Picker.Item label="User defined date from and to date" value="User defined date from and to date" />
+     <Picker.Item label="Today" value="Today" key={0} />
+  <Picker.Item label="Previous Day"  value="Previous Day" key={1} />
+   <Picker.Item label="Last 3 days" value="Last 3 days" key={2} />
+  <Picker.Item label="Last 5 days" value="Last 5 days" key={3} />
+  <Picker.Item label="Last week" value="Last week" key={4} />
+   <Picker.Item label="Current month" value="Current month" key={5} />
+  <Picker.Item label="Last month" value="Last month" key={6} />
+  <Picker.Item label="Last 3 months" value="Last 3 months"  key={7} />
+  <Picker.Item label="Last Quarter" value="Last Quarter" key={8} />
+  <Picker.Item label="Last 6 months" value="Last 6 months" key={9} />
+  <Picker.Item label="User defined date from and to date" value="User defined date from and to date" key={10} />
 </Picker>
 </View>
 </View>
@@ -436,7 +461,7 @@ render(){
       </TouchableOpacity>
       </View>:null }
       <View style={{flexDirection:'row'}}>
-        {this.state.ChooseStartDate? <View style={{marginLeft:wp(10),marginBottom:hp(10),}}>
+        {this.state.ChooseStartDate?<View style={{marginLeft:wp(10),marginBottom:hp(10),}}>
          <DatePicker
           format='MM/DD/YY'
       date={this.state.startDateValue}

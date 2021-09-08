@@ -9,6 +9,7 @@ import { CommonActions } from '@react-navigation/native';
 import { hp, wp } from '../utils/heightWidthRatio';
 import DatePicker from 'react-native-datepicker';
 import moment from 'moment';
+import {BASE_URL} from '../utils/BaseUrl';
 export default class BeatPlan extends Component{
     constructor(props){
         super(props);
@@ -47,7 +48,7 @@ export default class BeatPlan extends Component{
 componentDidMount(){
     AsyncStorage.getItem('@loginToken').then(succ=>{
         if(succ){
-       this.setState({token:JSON.stringify(succ)});
+       this.setState({token:succ});
        this.setState({startDateValue:new Date(),endDateValue:new Date(),checkstartDate:moment().format('L')})
         }
       });
@@ -106,7 +107,7 @@ dataFetchStockItem=(enddates)=>{
     let startdate=JSON.stringify(this.state.startdate);
     let enddate=JSON.stringify(enddates);
     console.log('start date',startdate,'end date',enddate);
-  var EditProfileUrl = `http://demo.3ptec.com/dms-demo/DmsCommonReport?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&selEntityType=${this.state.type}&reportDataSource=salesperson-beat-plan-fetch&reportInputFieldsData={"selEndDateNum" : ${enddate} , "timeoffset" : "330" , "selStartDateNum" :${startdate} ,"userLoginId":${this.state.username}}`
+  var EditProfileUrl = `${BASE_URL}/dms-demo/DmsCommonReport?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&selEntityType=${this.state.type}&reportDataSource=salesperson-beat-plan-fetch&reportInputFieldsData={"selEndDateNum" : ${enddate} , "timeoffset" : "330" , "selStartDateNum" :${startdate} ,"userLoginId":${this.state.username}}`
   console.log('Add product Url:' + EditProfileUrl)
   fetch(EditProfileUrl,  {
     method: 'Post',

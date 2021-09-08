@@ -19,6 +19,9 @@ import Spinner from 'react-native-loading-spinner-overlay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import firebase from '../../utils/firebase';
 import { wp, hp } from '../../utils/heightWidthRatio';
+import {BASE_URL} from '../../utils/BaseUrl';
+import Database from '../../utils/Database';
+const db = new Database();
 export default class Login extends Component{
     constructor(props){
         super(props);
@@ -27,14 +30,16 @@ export default class Login extends Component{
           emailID:'',
           password:'',
           showText:true,
-          spinner:false
+          spinner:false,
+          user_id:''
         }
     }
     componentDidMount(){
+      firebase.database().ref('user_id').on('value',(snap) =>{
+        this.setState({user_id:snap.val()});
+      });
      console.log('the props are working',this.props);
         BackHandler.addEventListener('hardwareBackPress', this.handleBackButton)
-        firebase.database().ref('CustomerMaster').remove().then(succ=>{
-          firebase.database().ref('StockMaster').remove().then(succ=>{
             AsyncStorage.removeItem('@loginToken').then(succ=>{
               AsyncStorage.removeItem('@is_login').then(succ=>{
                 AsyncStorage.removeItem('@tenantName').then(succ=>{
@@ -43,9 +48,14 @@ export default class Login extends Component{
               })
             });
           });
-          });
-        });
       });
+ }
+ clearDatabase=()=>{
+  firebase.database().ref('CustomerMaster').remove().then(succ=>{
+    firebase.database().ref('StockMaster').remove().then(succ=>{
+      console.log('database cleared');
+    });
+  });
  }
  validate = (text) => {
   console.log(text);
@@ -80,7 +90,9 @@ export default class Login extends Component{
     await AsyncStorage.setItem('@is_login', "1");
   }
   loginAPI=()=>{
-    var EditProfileUrl = `http://demo.3ptec.com/dms-demo/Login?user_txt=${this.state.emailID}&pwd_txt=${this.state.password}&sourcetype=AndroidSalesPersonApp&timeoffset=330`
+    AsyncStorage.setItem('email_id',this.state.emailID).then(succ=>{
+      AsyncStorage.setItem('password',this.state.password).then(succ=>{
+    var EditProfileUrl = `${BASE_URL}/dms-demo/Login?user_txt=${this.state.emailID}&pwd_txt=${this.state.password}&sourcetype=AndroidSalesPersonApp&timeoffset=330`
     console.log('Add product Url:' + EditProfileUrl)
     fetch(EditProfileUrl,  {
       method: 'Post',
@@ -93,31 +105,69 @@ export default class Login extends Component{
       .then(responseData => {
         if (responseData !== 'Error - Invalid username / password') {
           this.LoginOrNot();
+          let itemName='different name';
           let username=responseData.fname+responseData.lname;
-         AsyncStorage.setItem('@loginToken',responseData.logintoken).then(succ=>{
-           AsyncStorage.setItem('@username',username).then(succ=>{
-             AsyncStorage.setItem('@orgid',responseData.orgid).then(succ=>{
-               AsyncStorage.setItem('@zone_id',responseData.zoneid).then(succ=>{
-               AsyncStorage.setItem('@tenantName',responseData.tenantName).then(succ=>{
-                 AsyncStorage.setItem('@type',responseData.type).then(succ=>{
-                  this.setState({emailID:'',password:'',showText:true,});
-                  this.props.navigation.navigate('Root',{ screen: 'DashBoardScreen',params: { data: 'from login' }});
+          if(responseData.loginid!==this.state.user_id){
+            itemName='from login';
+          // db.deleteCustomerTable().then(succ=>{
+          //   db.deleteCustomerTimeTable().then(succ=>{
+          //     db.deleteStockTimeTable().then(succ=>{
+          //       db.deleteStockTable().then(succ=>{
+                  AsyncStorage.setItem('@loginToken',responseData.logintoken).then(succ=>{
+                    AsyncStorage.setItem('@username',username).then(succ=>{
+                      AsyncStorage.setItem('@orgid',responseData.orgid).then(succ=>{
+                        AsyncStorage.setItem('@zone_id',responseData.zoneid).then(succ=>{
+                          firebase.database().ref('user_id/').set(responseData.loginid).then(succ=>{
+                        AsyncStorage.setItem('@tenantName',responseData.tenantName).then(succ=>{
+                          AsyncStorage.setItem('@type',responseData.type).then(succ=>{
+                            AsyncStorage.setItem('@user_id',JSON.stringify(responseData)).then(succ=>{
+                             this.setState({emailID:'',password:'',showText:true,});
+         
+                             this.props.navigation.navigate('Root',{ screen: 'DashBoardScreen',params: { data: itemName }});
+                            });
+                          });
+                        });
+                       });
+                //       });
+                //     });
+                //   });
+                //  });
+                })
+              })
+            })
+          }).catch(err=>{
+             console.log(err);
+          })
+          }else{
+            AsyncStorage.setItem('@loginToken',responseData.logintoken).then(succ=>{
+              AsyncStorage.setItem('@username',username).then(succ=>{
+                AsyncStorage.setItem('@orgid',responseData.orgid).then(succ=>{
+                  AsyncStorage.setItem('@zone_id',responseData.zoneid).then(succ=>{
+                    firebase.database().ref('user_id/').set(responseData.loginid).then(succ=>{
+                  AsyncStorage.setItem('@tenantName',responseData.tenantName).then(succ=>{
+                    AsyncStorage.setItem('@type',responseData.type).then(succ=>{
+                      AsyncStorage.setItem('@user_id',JSON.stringify(responseData)).then(succ=>{
+                       this.setState({emailID:'',password:'',showText:true,});
+   
+                       this.props.navigation.navigate('Root',{ screen: 'DashBoardScreen',params: { data: itemName }});
+                      });
+                    });
+                  });
                  });
-               });
-             });
+                });
+              });
+            });
            });
-         });
-        });
+          }
           // console.log(JSON.stringify(responseData))
         } else {
          alert(responseData);
         }
         // console.log('contact list response object:', JSON.stringify(responseData))
       })
-      .catch(error => {
-        console.error('error coming',error)
-      })
       .done()
+    });
+  });
   }
  handleBackButton=()=>{
   if (this.props.navigation.isFocused()) {
