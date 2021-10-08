@@ -21,6 +21,8 @@ import firebase from '../../utils/firebase';
 import { wp, hp } from '../../utils/heightWidthRatio';
 import {BASE_URL} from '../../utils/BaseUrl';
 import Database from '../../utils/Database';
+import NetInfo from "@react-native-community/netinfo";
+import OfflineUserScreen from '../../utils/OfflineScreen';
 const db = new Database();
 export default class Login extends Component{
     constructor(props){
@@ -31,10 +33,12 @@ export default class Login extends Component{
           password:'',
           showText:true,
           spinner:false,
-          user_id:''
+          user_id:'',
+          connected:true
         }
     }
     componentDidMount(){
+      this.checkInternet();
       firebase.database().ref('user_id').on('value',(snap) =>{
         this.setState({user_id:snap.val()});
       });
@@ -105,6 +109,7 @@ export default class Login extends Component{
       .then(responseData => {
         if (responseData !== 'Error - Invalid username / password') {
           this.LoginOrNot();
+          console.log('login',JSON.stringify(responseData));
           let itemName='different name';
           let username=responseData.fname+responseData.lname;
           if(responseData.loginid!==this.state.user_id){
@@ -135,8 +140,6 @@ export default class Login extends Component{
                 })
               })
             })
-          }).catch(err=>{
-             console.log(err);
           })
           }else{
             AsyncStorage.setItem('@loginToken',responseData.logintoken).then(succ=>{
@@ -164,7 +167,10 @@ export default class Login extends Component{
          alert(responseData);
         }
         // console.log('contact list response object:', JSON.stringify(responseData))
-      })
+      }).catch(err=>{
+        this.checkInternet()
+        console.log(err);
+     })
       .done()
     });
   });
@@ -176,10 +182,19 @@ export default class Login extends Component{
     return true
   } 
 }
+checkInternet=()=>{
+  NetInfo.fetch().then(state => {
+    console.log("Connection type", state.isConnected);
+    this.setState({connected:state.isConnected});
+  });
+}
  componentWillUnmount() {
     BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton);
   }
   render(){
+   if(!this.state.connected){
+return(<OfflineUserScreen onTry={this.checkInternet} />)
+   }
     return(
      <View style={styles.container}>
         <Spinner

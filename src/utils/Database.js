@@ -27,7 +27,7 @@ export default class Database {
           if (res.rows.length >= 0) {
             txn.executeSql('DROP TABLE IF EXISTS STOCK_TABLE', []);
             txn.executeSql(
-              'CREATE TABLE IF NOT EXISTS STOCK_TABLE(stock_id INTEGER PRIMARY KEY AUTOINCREMENT, item_description, item_group, bookedqty, reorderlevel,updatedate ,name,pkgunit,childunit,instockqty,orgid)',
+              'CREATE TABLE IF NOT EXISTS STOCK_TABLE(stock_id INTEGER PRIMARY KEY AUTOINCREMENT, item_description, item_group, bookedqty, reorderlevel,updatedate ,name,pkgunit,childunit,instockqty,orgid,pkgunitrate,itemcode,itemskuflag,iteminfoflag,itemmasterrowkey,itemschemeflag,pkgid)',
               []
             ).then(()=>{
               resolve(db);
@@ -175,7 +175,7 @@ export default class Database {
                     console.log('table existes')
                   }).catch((error) =>{
                       db.transaction((tx) => {
-                          tx.executeSql('CREATE TABLE IF NOT EXISTS STOCK_TABLE (stock_id INTEGER PRIMARY KEY AUTOINCREMENT, item_description, item_group, bookedqty, reorderlevel,updatedate ,name,pkgunit,childunit,instockqty,orgid,)');
+                          tx.executeSql('CREATE TABLE IF NOT EXISTS STOCK_TABLE (stock_id INTEGER PRIMARY KEY AUTOINCREMENT, item_description, item_group, bookedqty, reorderlevel,updatedate ,name,pkgunit,childunit,instockqty,orgid)');
                       }).then(() => {
                         console.log('table created');
                       }).catch(error => {
@@ -291,8 +291,8 @@ export default class Database {
        item.forEach((valueItem,index)=>{
     db.transaction(function (tx) {
       tx.executeSql(
-        'INSERT INTO STOCK_TABLE(item_description, item_group, bookedqty, reorderlevel,updatedate ,name,pkgunit,childunit,instockqty,orgid) VALUES(?,?,?,?,?,?,?,?,?,?)',
-        [valueItem.itemdescription,valueItem.itemgroup,valueItem.bookedqty,valueItem.reorderlevel,valueItem.updatedate,valueItem.itemname,valueItem.pkgunit,valueItem.childpkgunit,valueItem.instockqty,valueItem.orgid],
+        'INSERT INTO STOCK_TABLE(item_description, item_group, bookedqty, reorderlevel,updatedate ,name,pkgunit,childunit,instockqty,orgid,pkgunitrate,itemcode,itemskuflag,iteminfoflag,itemmasterrowkey,itemschemeflag,pkgid) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        [valueItem.itemdescription,valueItem.itemgroup,valueItem.bookedqty,valueItem.reorderlevel,valueItem.updatedate,valueItem.itemname,valueItem.pkgunit,valueItem.childpkgunit,valueItem.instockqty,valueItem.orgid,valueItem.pkgunitrate,valueItem.itemcode,valueItem.itemskuflag,valueItem.iteminfoflag,valueItem.itemmasterrowkey,valueItem.itemschemeflag,valueItem.pkgid,],
         (tx, results) => {
           if (results.rowsAffected > 0) {
             resolve(results);
@@ -341,7 +341,7 @@ db.transaction(function (tx) {
   db.transaction(function (tx) {
     tx.executeSql(
       'INSERT INTO CUSTOMER_TABLE(city, type, name, orggroup,zoneid,state,typecus,country,orgid,loginid,emailid,contactno) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
-      [valueItem.city,valueItem.type,valueItem.name,valueItem.orggroup,valueItem.zoneid,valueItem.state,valueItem.typecus,valueItem.country,valueItem.orgid,valueItem.loginid,valueItem.emailid,valueItem.contactno],
+      [valueItem.city,valueItem.type,valueItem.name,valueItem.orggroup,valueItem.zoneid,valueItem.state,valueItem.orgtypename,valueItem.country,valueItem.orgid,valueItem.loginid,valueItem.emailid,valueItem.contactno],
       (tx, results) => {    
         if (results.rowsAffected > 0) {
           resolve(results);

@@ -11,6 +11,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import firebase from '../../utils/firebase';
 import { CommonActions } from '@react-navigation/native';
 import {BASE_URL} from '../../utils/BaseUrl';
+import NetInfo from "@react-native-community/netinfo";
+import OfflineUserScreen from '../../utils/OfflineScreen';
 export default class CustomerGrid extends Component {
   state = {
     text: "",
@@ -20,16 +22,19 @@ export default class CustomerGrid extends Component {
     address: '',
     orgId: '',
     zoneid: '',
-    type: ''
+    type: '',
+    connected:true
   }
 
   componentDidMount() {
+    this.checkInternet();
     AsyncStorage.getItem('@loginToken').then(succ => {
       if (succ) {
         this.setState({ token: succ });
         console.log('login token', succ);
         this.dataFetchStockItem();
         this.dataFetch();
+        console.log('ligon',this.props.route.params.dataItem)
         let address = this.props.route.params.dataItem.city + ',' + this.props.route.params.dataItem.state + ',' + this.props.route.params.dataItem.country;
         console.log(address);
         console.log(this.props.route.params.dataItem.emailid, this.props.route.params.dataItem.contactno)
@@ -103,6 +108,12 @@ export default class CustomerGrid extends Component {
       })
       .done()
   }
+  checkInternet=()=>{
+    NetInfo.fetch().then(state => {
+      console.log("Connection type", state.isConnected);
+      this.setState({connected:state.isConnected});
+    });
+  }
   dataFetch = () => {
     var EditProfileUrl = `${BASE_URL}/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=500&selEntityId=${this.props.route.params.dataItem.orgid}&selEntityType=superstockist&reportDataSource=FetchEntityStockItems`
     console.log('Add product Url:' + EditProfileUrl)
@@ -130,11 +141,15 @@ export default class CustomerGrid extends Component {
       })
       .catch(error => {
         //  this.hideLoading();
+        this.checkInternet()
         console.error('error coming', error)
       })
       .done()
   }
   render() {
+    if(!this.state.connected){
+      return(<OfflineUserScreen onTry={this.checkInternet} />)
+         }
     return (
       <View style={{ flex: 1, backgroundColor: '#fff' }}>
         <View style={styles.headerView}>

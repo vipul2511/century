@@ -11,6 +11,8 @@ import { wp, hp } from '../utils/heightWidthRatio';
 import Spinner from 'react-native-loading-spinner-overlay';
 import { Picker } from '@react-native-picker/picker';
 import {BASE_URL} from '../utils/BaseUrl';
+import NetInfo from "@react-native-community/netinfo";
+import OfflineUserScreen from '../utils/OfflineScreen';
 let width=Dimensions.get('window').width;
 export default class StockTable extends Component{
     constructor(props){
@@ -30,6 +32,7 @@ export default class StockTable extends Component{
               noMoreLoad:true,
               time:'',
               spinner:false,
+              connected:true
         }
         let onEndReached = false;
         this.backItems= this.backItems.bind(this);
@@ -77,6 +80,12 @@ componentWillUnmount(){
       this.props.navigation.goBack();
       return true;
   } 
+}
+checkInternet=()=>{
+  NetInfo.fetch().then(state => {
+    console.log("Connection type", state.isConnected);
+    this.setState({connected:state.isConnected});
+  });
 }
 getDatafromFirebase=()=>{
   firebase.database().ref('CustomerMasterTable/Totalcount').once('value',(snap)=>{
@@ -136,7 +145,7 @@ getDatafromFirebase=()=>{
 
 componentDidMount(){
   console.log('props',JSON.stringify(this.props));
-
+this.checkInternet();
    AsyncStorage.getItem('@loginToken').then(succ=>{
      if(succ){
     this.setState({token:succ});
@@ -277,6 +286,9 @@ renderItem = ({ item, index }) => {
     )
   }
 render(){
+  if(!this.state.connected){
+    return(<OfflineUserScreen onTry={this.checkInternet} />)
+       }
     return(
         <View style={styles.container}>
            <View style={styles.headerView}>

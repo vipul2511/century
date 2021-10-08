@@ -7,6 +7,8 @@ import { CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { wp, hp } from '../utils/heightWidthRatio';
 import {BASE_URL} from '../utils/BaseUrl';
+import NetInfo from "@react-native-community/netinfo";
+import OfflineUserScreen from '../utils/OfflineScreen';
 let width=Dimensions.get('window').width;
 export default class DateWiseReport extends Component{
     constructor(props){
@@ -23,6 +25,7 @@ export default class DateWiseReport extends Component{
               orgId:'',
               token:'',
               loading:false,
+              connected:true
         }
         let onEndReached = false;
         this.backItems= this.backItems.bind(this);
@@ -30,6 +33,12 @@ export default class DateWiseReport extends Component{
     componentWillUnmount(){
       BackHandler.removeEventListener('hardwareBackPressed',this.backItems);
      }
+     checkInternet=()=>{
+      NetInfo.fetch().then(state => {
+        console.log("Connection type", state.isConnected);
+        this.setState({connected:state.isConnected});
+      });
+    }
       backItems(){
         if (this.props.navigation.isFocused()) { 
           console.log('working')
@@ -124,7 +133,8 @@ salesReportData=(startdate,enddate)=>{
       // console.log('contact list response object:', JSON.stringify(responseData))
     })
     .catch(error => {
-      //  this.hideLoading();
+       this.hideLoading();
+       this.checkInternet();
       console.error('error coming',error)
     })
     .done()
@@ -265,6 +275,9 @@ renderItem = ({ item,index }) => (
     )
  }
 render(){
+  if(!this.state.connected){
+    return(<OfflineUserScreen onTry={this.checkInternet} />)
+       }
     return(
         <View style={styles.container}>
            <View style={styles.headerView}>

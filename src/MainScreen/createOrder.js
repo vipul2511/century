@@ -16,6 +16,8 @@ import Geolocation from 'react-native-geolocation-service';
 import Geocoder from 'react-native-geocoding';
 import {BASE_URL} from '../utils/BaseUrl';
 Geocoder.init("AIzaSyBgIsfLI2Hp_LsfnxcQ2thDKZLNyESBxiI");
+import Database from '../utils/Database';
+const db = new Database();
 let width = Dimensions.get('window').width;
 let height = Dimensions.get('window').height;
 export default class CreateOrder extends Component {
@@ -134,54 +136,82 @@ AsyncStorage.getItem('@type').then(succ => {
         //   this.dataFetchStockItem();
     }
 })
-firebase.database().ref('StockMaster/data/').on('value', (snap) => {
-    let items = [];
-    snap.forEach((child) => {
-        items.push({
-            name: child.val().name,
-            type: child.val().orgtypename,
-        });
+// firebase.database().ref('StockMaster/data/').on('value', (snap) => {
+//     let items = [];
+//     snap.forEach((child) => {
+//         items.push({
+//             name: child.val().name,
+//             type: child.val().orgtypename,
+//         });
+//     });
+//     let distributor = this.state.distributor
+//     let retailer = this.state.retailer
+//     let rmbo = this.state.rmbo
+//     items.map((item, index) => {
+//         if (item.type == "Distributor") {
+//             distributor.push(item);
+//         }
+//         if (item.type == "Retailer") {
+//             retailer.push(item);
+//         }
+//         if (item.type == "RMBO") {
+//             rmbo.push(item);
+//         }
+//     });
+//     //  console.log('distributor',distributor,'retailer',retailer,'rmbo',rmbo);
+//     this.setState({ distributor: distributor, retailer: retailer, rmbo: rmbo });
+// });
+db.retrieveCustomer().then(table=>{
+    console.log(' customer table',table);
+        let items = [];
+            table.forEach((child) => {
+                items.push({
+                    name: child.name,
+                    type: child.orgtypename,
+                });
+            });
+            let distributor = this.state.distributor
+            let retailer = this.state.retailer
+            let rmbo = this.state.rmbo
+            items.map((item, index) => {
+                if (item.type == "Distributor") {
+                    distributor.push(item);
+                }
+                if (item.type == "Retailer") {
+                    retailer.push(item);
+                }
+                if (item.type == "RMBO") {
+                    rmbo.push(item);
+                }
+            });
+            //  console.log('distributor',distributor,'retailer',retailer,'rmbo',rmbo);
+            this.setState({ distributor: distributor, retailer: retailer, rmbo: rmbo });
     });
-    let distributor = this.state.distributor
-    let retailer = this.state.retailer
-    let rmbo = this.state.rmbo
-    items.map((item, index) => {
-        if (item.type == "Distributor") {
-            distributor.push(item);
-        }
-        if (item.type == "Retailer") {
-            retailer.push(item);
-        }
-        if (item.type == "RMBO") {
-            rmbo.push(item);
-        }
-    });
-    //  console.log('distributor',distributor,'retailer',retailer,'rmbo',rmbo);
-    this.setState({ distributor: distributor, retailer: retailer, rmbo: rmbo });
-});
-firebase.database().ref('CustomerMaster/data/').on('value', (snap) => {
+    db.retrieveStock(0).then(table=>{
+
     let items = [];
     let objArr = [];
-    snap.forEach((child) => {
+    table.forEach((child) => {
+        console.log('chuld',child);
         let obj =
         {
-            itemmasterrowkey: child.val().itemmasterrowkey,
-            item_description: child.val().itemdescription,
-            item_group: child.val().itemgroup,
-            bookedqty: child.val().bookedqty,
-            reorderlevel: child.val().reorderlevel,
-            updatedate: child.val().updatedate,
-            name: child.val().itemname,
-            pkgunit: child.val().pkgunit,
-            instockqty: child.val().instockqty,
-            orgid: child.val().orgid,
-            pkgunitrate: child.val().pkgunitrate,
-            itemcode: child.val().itemcode,
-            itemschemeflag: child.val().itemschemeflag,
-            pkgid: child.val().pkgid,
-            itemskuflag: child.val().itemskuflag,
-            iteminfoflag: child.val().iteminfoflag,
-            itemskucode: child.val().itemskucode
+            itemmasterrowkey: child.itemmasterrowkey,
+            item_description: child.item_description,
+            item_group: child.item_group,
+            bookedqty: child.bookedqty,
+            reorderlevel: child.reorderlevel,
+            updatedate: child.updatedate,
+            name: child.name,
+            pkgunit: child.pkgunit,
+            instockqty: child.instockqty,
+            orgid: child.orgid,
+            pkgunitrate: child.pkgunitrate?child.pkgunitrate:0,
+            itemcode: child.itemcode,
+            itemschemeflag: child.itemschemeflag,
+            pkgid: child.pkgid,
+            itemskuflag: child.itemskuflag,
+            iteminfoflag: child.iteminfoflag,
+            itemskucode: child.itemskucode
         }
         items.push(obj);
         objArr.push(obj)
@@ -192,8 +222,7 @@ firebase.database().ref('CustomerMaster/data/').on('value', (snap) => {
             newArr.push(items);
         }
     });
-    // console.log('new arr', JSON.stringify(newArr));
-    this.setState({ tableData: newArr, masterlist: newArr, loading: false });
+    this.setState({ tableData: items, masterlist: newArr, loading: false });
     // console.log('report', this.state.tableData.length);
     // console.log('re loaded');
 });
@@ -246,14 +275,16 @@ createOrderApi = () => {
             fetch(EditProfileUrl, {
                 method: 'Post',
                 headers: {
-                    Accept: 'application/json',
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+            
                 },
                 body: rawData
             })
-                .then(response => response.json())
+                // .then(response => response.json())
                 .then(responseData => {
                     this.hideLoading();
+                    console.log('resposne data',responseData);
                     Toast.show('Sales Order Created successfully.');
                     if (this.state.fromPervious == false) {
                         this.props.navigation.navigate('BPR', { dataItem: this.props.route.params.dataItem });
@@ -263,12 +294,12 @@ createOrderApi = () => {
                 })
                 .catch(error => {
                     this.hideLoading();
-                    Toast.show('Sales Order Created successfully.');
-                    if (this.state.fromPervious == false) {
-                        this.props.navigation.navigate('BPR', { dataItem: this.props.route.params.dataItem });
-                    } else {
-                        this.props.navigation.navigate('SalesinTransit', { dataItem: this.props.route.params.dataItem });
-                    }
+                    Toast.show('Sales Order Not Created.');
+                    // if (this.state.fromPervious == false) {
+                    //     this.props.navigation.navigate('BPR', { dataItem: this.props.route.params.dataItem });
+                    // } else {
+                    //     this.props.navigation.navigate('SalesinTransit', { dataItem: this.props.route.params.dataItem });
+                    // }
                     console.error('error coming', error)
                 })
                 .done()

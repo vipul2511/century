@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { TextInput, View, Dimensions, TouchableOpacity,UIManager, LayoutAnimation,Text, ScrollView, StyleSheet, FlatList, BackHandler, Modal, ActivityIndicator } from 'react-native';
+import { TextInput, View, Dimensions,Animated, TouchableOpacity,UIManager, LayoutAnimation,Text, ScrollView, StyleSheet, FlatList, BackHandler, Modal, ActivityIndicator } from 'react-native';
 import firebase from '../utils/firebase';
 import resp from 'rn-responsive-font';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -41,10 +41,15 @@ export default class ViewCustomer extends Component {
       indexNum:'',
       stockvalue:'',
       selectedValueItem:'',
+      fromApi:false,
       key:0,
       offset:0,
       searchText:'',
-      NoDataShow:false
+      NoDataShow:false,
+      showCustomerloader:false,
+      syncingText:'Syncing Please wait....',
+      callingName:'',
+      progressStatus: 0,
     }
 
     let onEndReached = false;
@@ -116,7 +121,7 @@ export default class ViewCustomer extends Component {
   }
   getDatafromFirebase = async() => {
     let bar = new Promise((resolve, reject) => {
-      this.showLoading();
+      {!this.state.fromApi?this.showLoading():null}
     db.retrieveStockTime().then(succ=>{
       let millTime=succ[0].time;
       let count=succ[0].count;
@@ -149,15 +154,19 @@ export default class ViewCustomer extends Component {
       })
       // console.log('new arr', JSON.stringify(newArr));
       let offsetValue=this.state.offset+800;
-      this.setState({ tableData: newArr, masterlist: newArr,offset:offsetValue,NoDataShow:NoData},()=>{
+      
+      this.setState({ tableData: newArr, masterlist: newArr,offset:offsetValue,},()=>{
         resolve();
       });
     });
   });
   bar.then((suc) => {
+    this.setState({progressStatus:parseInt(100)});
+    if(this.state.progressStatus==100) this.setState({showCustomerloader:false,});
     this.hideLoading();
 });
 bar.catch((error)=>{
+  this.setState({showCustomerloader:false,})
 this.hideLoading()
 })
   }
@@ -191,7 +200,7 @@ this.hideLoading()
     this.setState({ spinner: false })
   }
   dataFetch = () => {
-    this.setState({ loading: true })
+    this.setState({ progressStatus: parseInt(0),offset:0,callingName:'Syncing Item Master Data',showCustomerloader:true })
     var EditProfileUrl = `${BASE_URL}/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=1000&selEntityId=${this.state.orgId}&selEntityType=superstockist&reportDataSource=FetchEntityStockItems`
     // console.log('Add product Url:' + EditProfileUrl)
     fetch(EditProfileUrl, {
@@ -203,18 +212,19 @@ this.hideLoading()
       .then(response => response.json())
       .then(responseData => {
         if (responseData !== 'Error - Invalid username / password') {
-          // console.log('length customer', responseData.stockItems.data.length);
-          if (this.state.totalCount !== responseData.stockItems.data.length) {
+          console.log('length customer', responseData.stockItems.data.length);
+          this.setState({progressStatus: parseInt(50)}); 
+        
             db.insertDataStock(responseData.stockItems.data).then((data)=>{
+              this.setState({progressStatus: parseInt(70),fromApi:true,syncingText:`Seems like it's taking more than usual time...Please wait`},()=>{
               db.insertDataTimeStock(responseData.stockItems.totalCount,responseData.stockItems.serviceTimeMilliSec).then(succ=>{
-                alert('Synced successfully');
+                this.getDatafromFirebase();
+                // this.setState({progressStatus:parseInt(100)});
+               
               });
             });
+            });
             // this.storeDatainDB(responseData.stockItems.data, responseData.stockItems.totalCount, responseData.stockItems.serviceTimeMilliSec);
-          } else {
-            this.setState({ loading: false, noMoreLoad: false })
-            // console.log('count is equal')
-          }
 
 
         } else {
@@ -353,6 +363,24 @@ this.hideLoading()
           visible={this.state.spinner}
           color='#1976D2'
         />
+        {this.state.showCustomerloader?<View style={{flex:1}}>
+        <View style={{justifyContent:'center',alignItems:'center',marginTop:190}}>
+         <Text style={styles.label}>  
+                  {this.state.callingName} 
+            </Text> 
+            </View>
+      <View style={styles.containerAnimation}>  
+            <Animated.View  
+                style={[  
+                    styles.inner,{width: this.state.progressStatus +"%"},  
+                ]}  
+            />   
+      </View>  
+      <Animated.Text style={styles.label}>  
+                  {this.state.syncingText} {this.state.progressStatus }%  
+            </Animated.Text>  
+      </View>:
+      <>
         <View style={{ flexDirection: 'row', zIndex: 2, backgroundColor: '#ffff' }}>
 
           <Text style={{ fontSize: 13 }}>Last Refresh- {this.state.time}</Text>
@@ -446,6 +474,7 @@ this.hideLoading()
            </View>
           </View>
         </Modal>
+        </>}
       </View>
     )
   }
@@ -470,6 +499,32 @@ const styles = StyleSheet.create({
     width: 80,
     color: '#fff'
   },
+  containerAnimation: {  
+    width: "100%",  
+    height: 40,  
+    padding: 1,  
+    borderColor: "black",  
+    borderWidth: 3,  
+    borderRadius: 5,  
+    marginTop: 10,  
+    justifyContent: "center",  
+  },  
+  inner:{  
+    width: "100%",  
+    height: 30,  
+    borderRadius: 5,  
+    justifyContent:'center',
+    alignItems:'center',
+    backgroundColor:"#1976D2",  
+  },  
+  label:{  
+    fontSize:18,  
+    color: "black",  
+    textAlign:'center',
+    // position: "absolute",  
+    // zIndex: 1,  
+    alignSelf: "center",  
+  }, 
   headerView: {
     height: 65,
     width: '100%',

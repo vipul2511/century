@@ -10,6 +10,8 @@ import { CommonActions } from '@react-navigation/native';
 import {PieChart} from 'react-native-charts-wrapper';
 import Spinner from 'react-native-loading-spinner-overlay';
 import {BASE_URL} from '../utils/BaseUrl';
+import NetInfo from "@react-native-community/netinfo";
+import OfflineUserScreen from '../utils/OfflineScreen';
 let width=Dimensions.get('window').width;
 export default class OpenPurchase extends Component{
     constructor(props){
@@ -19,6 +21,7 @@ export default class OpenPurchase extends Component{
             ReportData:[],
             spinner:false,
             dataLoaded:false,
+            connected:true,
             NoData:false,
             tableHead: ['Head', 'Head2', 'Head3', 'Head4'],
             pie: {
@@ -78,6 +81,12 @@ export default class OpenPurchase extends Component{
     componentWillUnmount(){
       BackHandler.removeEventListener('hardwareBackPressed',this.backItems);
      }
+     checkInternet=()=>{
+      NetInfo.fetch().then(state => {
+        console.log("Connection type", state.isConnected);
+        this.setState({connected:state.isConnected});
+      });
+    }
       backItems(){
         if (this.props.navigation.isFocused()) { 
           console.log('working')
@@ -117,6 +126,7 @@ searchFilterFunction = (text) => {
 };
 
 componentDidMount(){
+  this.checkInternet()
    AsyncStorage.getItem('@loginToken').then(succ=>{
      if(succ){
     this.setState({token:succ});
@@ -262,7 +272,8 @@ renderItem = ({ item,index }) =>
         // console.log('contact list response object:', JSON.stringify(responseData))
       })
       .catch(error => {
-        //  this.hideLoading();
+         this.hideLoading();
+        this.checkInternet()
         console.error('error coming',error)
       })
       .done()
@@ -451,6 +462,9 @@ measureLoadingBar = ({nativeEvent}) => {
   this.setState({yAxis:nativeEvent.layout.y})
 }
 render(){
+  if(!this.state.connected){
+    return(<OfflineUserScreen onTry={this.checkInternet} />)
+       }
     const time = this.state.pie.detail.time_value_list
     const legend = this.state.pie.detail.legend_list
     const dataset = this.state.pie.detail.dataset

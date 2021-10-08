@@ -20,6 +20,8 @@ import { wp, hp } from '../../utils/heightWidthRatio';
 import { CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {BASE_URL} from '../../utils/BaseUrl';
+import NetInfo from "@react-native-community/netinfo";
+import OfflineUserScreen from '../../utils/OfflineScreen';
 let width=Dimensions.get('window').width;
 let height=Dimensions.get('window').height;
 export default class BillingOutlet extends React.Component {
@@ -33,9 +35,11 @@ export default class BillingOutlet extends React.Component {
         token:'',
         customerCount:0,
         masterlist:'',
+        connected:true
       }
   }
   componentDidMount(){
+    this.checkInternet();
     console.log('the props of chart',JSON.stringify(this.props))
     AsyncStorage.getItem('@zone_id').then(id=>{
       if(id){
@@ -49,6 +53,12 @@ export default class BillingOutlet extends React.Component {
      console.log('login token in chat',this.state.token); 
       this.millsecond()
       }
+    });
+  }
+  checkInternet=()=>{
+    NetInfo.fetch().then(state => {
+      console.log("Connection type", state.isConnected);
+      this.setState({connected:state.isConnected});
     });
   }
   nodata=()=>{
@@ -212,7 +222,9 @@ logout=()=>{
   ) 
   }
   render() {
-    
+    if(!this.state.connected){
+      return(<OfflineUserScreen onTry={this.checkInternet} />)
+         }
     return (
        
       <View style={{flex: 1,backgroundColor:'#fff'}}>

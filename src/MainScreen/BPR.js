@@ -114,7 +114,7 @@ renderItem = ({ item,index }) =>
   return(
     <View key={index}>
      <TouchableOpacity style={{flexDirection:'row',height:'auto',}} onPress={()=>{this.props.navigation.navigate('OpenPurchaseChildScreen',{dataItem:this.props.route.params.dataItem,orderID:item._id.$oid})}}>
-       <View style={{width:wp(50),alignSelf:'flex-start',flexDirection:'row',justifyContent:'flex-start',alignItems:'flex-start',marginLeft:10}}>
+       <View style={{width:wp(200),alignSelf:'flex-start',flexDirection:'row',justifyContent:'flex-start',alignItems:'flex-start',marginLeft:10}}>
      <Text style={{fontSize:13,marginLeft:5,flexWrap:'wrap',marginBottom:10,}}>{item.customername}</Text>
      </View>
      <View style={{width:wp(100),alignSelf:'center',flexDirection:'row',justifyContent:'flex-start',alignItems:'flex-start',marginLeft:10}}>
@@ -236,7 +236,7 @@ nodata=()=>{
     return(
       <View style={{marginTop:8,marginBottom:5,marginLeft:5,}}>
                 <View style={{flexDirection:'row',}}>
-                <View style={{width:wp(50),alignSelf:'flex-start',marginLeft:5}}>
+                <View style={{width:wp(200),alignSelf:'flex-start',marginLeft:5}}>
                 <Text style={{fontWeight:'bold',textAlign:'left'}}>Name</Text></View>
                 <View style={{width:wp(100),alignSelf:'center'}}>
                 <Text style={{fontWeight:'bold',textAlign:'center'}}>Type</Text></View>
@@ -260,13 +260,13 @@ render(){
               <Icon name="arrow-back" size={25} color={"#fff"} onPress={()=>{this.props.navigation.goBack()}} />
            
           </View>
-          <View style={styles.TitleContainer}>
+          {/* <View style={styles.TitleContainer}> */}
           {this.state.NoData==false?<View>
                <TextInput placeholder="Search" style={{backgroundColor:'#fff',width:wp(250),height:hp(50)}} onChangeText={(text)=>{this.searchFilterFunction(text)}}    />
-            </View>:<View style={{flex:0.6}}>
+            </View>:<View style={styles.nameStyle} >
               <Text style={styles.TitleStyle}>{this.props.route.params.dataItem.name}</Text>
             </View>}
-          </View>
+          {/* </View> */}
           <TouchableOpacity
             style={styles.SearchContainer}
             onPress={()=>{this.props.navigation.navigate('DashBoardScreen')}}
@@ -320,6 +320,14 @@ const styles = StyleSheet.create({
       margin: 5,
       height: 30,
       width: 30,
+    },
+    nameStyle:{
+      flexDirection: 'row',
+      // flex: 0.6,
+      width:'70%',
+      backgroundColor: '#1976D2',
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     backButtonStyle: {
       margin: 5,

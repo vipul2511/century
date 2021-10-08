@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {TextInput,View,TouchableOpacity,Text,ScrollView,StyleSheet,FlatList, Dimensions,BackHandler,ActivityIndicator} from 'react-native';
+import {TextInput,View,TouchableOpacity,Animated,Text,ScrollView,StyleSheet,FlatList, Dimensions,BackHandler,ActivityIndicator} from 'react-native';
 import firebase from '../utils/firebase';
 import { Table, Row, Rows } from 'react-native-table-component';
 import resp from 'rn-responsive-font';
@@ -28,7 +28,13 @@ export default class ViewStock extends Component{
               time:'',
               searchText:'',
               spinner:false,
-              NoDataShow:false
+              NoDataShow:false,
+              syncingText:'Syncing Please wait....',
+              callingName:'',
+              progressStatus: 0,
+              syncingText:'',
+              showCustomerloader:false,
+              fromApi:false,
         }
         let onEndReached = false;
         this.backItems= this.backItems.bind(this);
@@ -64,6 +70,7 @@ export default class ViewStock extends Component{
       }
     };
 getCustomerData=async()=>{
+  this.setState({progressStatus: parseInt(70)}); 
   db.retrieveCustomerTime().then(succ=>{
     let millTime=succ[0].time;
     let count=succ[0].count;
@@ -74,7 +81,8 @@ getCustomerData=async()=>{
   db.retrieveCustomer().then(table=>{
  let NoData=false;
  if(table.length==0) NoData=true
- this.setState({tableData:table,masterlist:table,NoDataShow:NoData});
+
+ this.setState({tableData:table,masterlist:table,NoDataShow:NoData,showCustomerloader:false});
   })
 }
 componentDidMount(){
@@ -117,7 +125,7 @@ renderItem = ({ item,index }) => (
      <Text style={{fontSize:13,marginLeft:15,flexWrap:'wrap',marginBottom:10}}>{item.orggroup}</Text>
      </View>
      <View style={{flex:0.5,alignSelf:'flex-end',flexDirection:'row'}}>
-     <Text style={{fontSize:13,marginLeft:15,flexWrap:'wrap',marginBottom:10}}>{item.type}</Text>
+     <Text style={{fontSize:13,marginLeft:15,flexWrap:'wrap',marginBottom:10}}>{item.typecus}</Text>
      </View>
      {/* <Text style={{fontSize:13,marginLeft:20}}>{item.contact}</Text> */}
      {/* <Text style={{fontSize:13,marginLeft:20,}}>{item.city}</Text> */}
@@ -134,6 +142,7 @@ renderItem = ({ item,index }) => (
   })
     }
   dataFetchStockItem=()=>{
+    this.setState({progressStatus: parseInt(0),showCustomerloader:true,syncingText:'We are all most there...Please wait',callingName:'Syncing Customer Master Data'}); 
     var EditProfileUrl = `${BASE_URL}/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=100&selEntityId=${this.state.orgId}&selEntityType=superstockist&reportDataSource=FetchEntityCustomersDetail`
     fetch(EditProfileUrl,  {
       method: 'Post',
@@ -144,12 +153,12 @@ renderItem = ({ item,index }) => (
       .then(response => response.json())
       .then(responseData => {
         if (responseData !== 'Error - Invalid username / password') {
+          this.setState({progressStatus: parseInt(50)}); 
           db.insertDataCustomer(responseData.customerDetails.data).then(succ=>{
-            db.insertDataTimeStock(responseData.stockItems.totalCount,responseData.stockItems.serviceTimeMilliSec).then(succ=>{
-              alert('Synced successfully');
+            db.insertDataTimeStock(responseData.customerDetails.totalCount,responseData.customerDetails.serviceTimeMilliSec).then(succ=>{
+              this.getCustomerData();
             });
           });
-          // this.stockDatainDB(responseData.customerDetails.data,responseData.customerDetails.totalCount,responseData.customerDetails.serviceTimeMilliSec);
         } else {
          console.log(responseData);
         }
@@ -213,6 +222,24 @@ render(){
           visible={this.state.spinner}
           color='#1976D2'
         />
+          {this.state.showCustomerloader?<View style={{flex:1}}>
+        <View style={{justifyContent:'center',alignItems:'center',marginTop:190}}>
+         <Text style={styles.label}>  
+                  {this.state.callingName} 
+            </Text> 
+            </View>
+      <View style={styles.containerAnimation}>  
+            <Animated.View  
+                style={[  
+                    styles.inner,{width: this.state.progressStatus +"%"},  
+                ]}  
+            />   
+      </View>  
+      <Animated.Text style={styles.label}>  
+                  {this.state.syncingText} {this.state.progressStatus }%  
+            </Animated.Text>  
+      </View>:
+      <>
         <View>
         <View style={{flexDirection:'row'}}>
           <Text style={{fontSize:13}}>Last Refresh- {this.state.time}</Text>
@@ -251,6 +278,8 @@ render(){
         }
        }
           />
+          </>
+          }
       </View>
     )
 }
@@ -300,4 +329,30 @@ const styles = StyleSheet.create({
       fontSize: resp(20),
       textAlign: 'center',
     },
+    containerAnimation: {  
+      width: "100%",  
+      height: 40,  
+      padding: 1,  
+      borderColor: "black",  
+      borderWidth: 3,  
+      borderRadius: 5,  
+      marginTop: 10,  
+      justifyContent: "center",  
+    },  
+    inner:{  
+      width: "100%",  
+      height: 30,  
+      borderRadius: 5,  
+      justifyContent:'center',
+      alignItems:'center',
+      backgroundColor:"#1976D2",  
+    },  
+    label:{  
+      fontSize:18,  
+      color: "black",  
+      textAlign:'center',
+      // position: "absolute",  
+      // zIndex: 1,  
+      alignSelf: "center",  
+    }, 
   });

@@ -22,6 +22,8 @@ import Spinner from 'react-native-loading-spinner-overlay';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {BASE_URL} from '../utils/BaseUrl';
 import Database from '../utils/Database';
+import NetInfo from "@react-native-community/netinfo";
+import OfflineUserScreen from '../utils/OfflineScreen';
 const db = new Database();
 // db.initDB();
 // db.initCustomerDB();
@@ -40,7 +42,8 @@ class DashBoardScreen extends Component{
            type:'',
            NoDataShow:false,
            syncingText:'Syncing Please wait....',
-           callingName:''
+           callingName:'',
+           connected:true
          }
          this.backItems= this.backItems.bind(this);
      }
@@ -65,6 +68,7 @@ class DashBoardScreen extends Component{
     }
    }
     componentDidMount(){
+      this.checkInternet();
       BackHandler.addEventListener('hardwareBackPressed',this.backItems);
       this.permission();
       AsyncStorage.getItem('@orgid').then(id=>{
@@ -98,6 +102,12 @@ class DashBoardScreen extends Component{
        
        console.log('props values dasg',JSON.stringify(this.props))
       
+    }
+    checkInternet=()=>{
+      NetInfo.fetch().then(state => {
+        console.log("Connection type", state.isConnected);
+        this.setState({connected:state.isConnected});
+      });
     }
     updateProgress (oEvent) {
       if (oEvent.lengthComputable) {
@@ -136,9 +146,9 @@ class DashBoardScreen extends Component{
     }
   dataFetchStockItem=()=>{
     console.log('next api called')
-    this.setState({progressStatus: parseInt(70),syncingText:'We are all most there...Please wait',callingName:'Syncing Customer Master Data'}); 
+    this.setState({progressStatus: parseInt(30),syncingText:'We are all most there...Please wait',callingName:'Syncing Customer Master Data'}); 
     var EditProfileUrl = `${BASE_URL}/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=500&selEntityId=${this.state.orgId}&selEntityType=superstockist&reportDataSource=FetchEntityCustomersDetail`
-    console.log('Add product Url:' + EditProfileUrl)
+    console.log('Add product Urlsss:' + EditProfileUrl)
     fetch(EditProfileUrl,  {
       method: 'Post',
       headers:{
@@ -148,7 +158,7 @@ class DashBoardScreen extends Component{
       .then(response => response.json())
       .then(responseData => {
         if (responseData !== 'Error - Invalid username / password') {
-          this.setState({progressStatus: parseInt(90)}); 
+          this.setState({progressStatus: parseInt(80)}); 
           db.insertDataCustomer(responseData.customerDetails.data).then(succ=>{
             db.insertDataTimeCustomer(responseData.customerDetails.totalCount,responseData.customerDetails.serviceTimeMilliSec).then(success=>{
               this.setState({progressStatus: parseInt(100)}); 
@@ -161,7 +171,8 @@ class DashBoardScreen extends Component{
         // console.log('contact list response object:', JSON.stringify(responseData))
       })
       .catch(error => {
-        //  this.hideLoading();
+        this.checkInternet();
+         this.hideLoading();
         console.error('error coming',error)
       })
       .done()
@@ -177,7 +188,7 @@ createTwoButtonAlert = () =>
       { cancelable: false }
     );
     dataFetchSecondCall=(packet)=>{
-      this.setState({progressStatus: parseInt(10),syncingText:'Please wait this process may take several minutes'}); 
+      this.setState({progressStatus: parseInt(50),syncingText:'Please wait this process may take several minutes'}); 
       console.log('second packet',packet)
       var EditProfileUrl = `${BASE_URL}/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=${packet}&selEntityId=${this.state.orgId}&selEntityType=superstockist&reportDataSource=FetchEntityStockItems`
       console.log('Add product Url:' + EditProfileUrl)
@@ -190,10 +201,11 @@ createTwoButtonAlert = () =>
         .then(response => response.json())
         .then(responseData => {
           if (responseData !== 'Error - Invalid username / password') {
-            this.setState({progressStatus: parseInt(15)}); 
+            this.setState({progressStatus: parseInt(70)}); 
              db.insertDataStock(responseData.stockItems.data).then((data)=>{
-              this.setState({progressStatus: parseInt(50),syncingText:`Seems like it's taking more than usual time...Please wait`},()=>{
+              this.setState({progressStatus: parseInt(80),syncingText:`Seems like it's taking more than usual time...Please wait`},()=>{
                 db.insertDataTimeStock(responseData.stockItems.totalCount,responseData.stockItems.serviceTimeMilliSec).then(succ=>{
+                  this.setState({progressStatus:parseInt(100)});
                   this.dataFetchStockItem();
                 });
               });
@@ -203,13 +215,14 @@ createTwoButtonAlert = () =>
           }
         })
         .catch(error => {
-          //  this.hideLoading();
+           this.hideLoading();
+           this.checkInternet();
           console.error('error coming',error)
         })
         .done()
   }
   dataFetch=()=>{
-    this.setState({progressStatus: parseInt(4),callingName:'Syncing Item Master Data'});  
+    this.setState({progressStatus: parseInt(0),callingName:'Syncing Item Master Data'});  
       var EditProfileUrl = `${BASE_URL}/dms-demo/FetchLoginEntityMasterData?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&startIndex=0&packetSize=500&selEntityId=${this.state.orgId}&selEntityType=superstockist&reportDataSource=FetchEntityStockItems`
       console.log('Add product Url:' + EditProfileUrl)
       fetch(EditProfileUrl,  {
@@ -222,7 +235,7 @@ createTwoButtonAlert = () =>
         .then(responseData => {
           if (responseData !== 'Error - Invalid username / password') {
             console.log('second called');
-            this.setState({progressStatus: parseInt(6)}); 
+            this.setState({progressStatus: parseInt(30)}); 
            this.dataFetchSecondCall(responseData.stockItems.totalCount);
             console.log('value',responseData.stockItems.totalCount);
           } else {
@@ -230,6 +243,7 @@ createTwoButtonAlert = () =>
           }
         })
         .catch(error => {
+          this.checkInternet();
           console.error('error coming',error)
         })
         .done()
@@ -244,6 +258,9 @@ createTwoButtonAlert = () =>
 
   }
   render(){
+    if(!this.state.connected){
+      return(<OfflineUserScreen onTry={this.checkInternet} />)
+         }
     return(
      <View style={styles.container} >
    <Spinner

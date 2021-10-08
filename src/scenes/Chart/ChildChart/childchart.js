@@ -21,6 +21,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import firebase from '../../../utils/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {BASE_URL} from '../../../utils/BaseUrl';
+import NetInfo from "@react-native-community/netinfo";
+import OfflineUserScreen from '../../../utils/OfflineScreen';
 let width=Dimensions.get('window').width;
 let height=Dimensions.get('window').height;
 export default class ChildChart extends React.Component {
@@ -38,6 +40,7 @@ export default class ChildChart extends React.Component {
         salessecond:'',
         salesthird:'',
         saleItemSlow:'',
+        connected:true,
         value: 0,
         valueAvailability:88,
         pie: {
@@ -96,6 +99,7 @@ export default class ChildChart extends React.Component {
       }
   }
   componentDidMount(){
+    this.checkInternet();
     AsyncStorage.getItem('@loginToken').then(succ=>{
       if(succ){
      this.setState({token:succ});
@@ -316,6 +320,7 @@ export default class ChildChart extends React.Component {
         // console.log('contact list response object:', JSON.stringify(responseData))
       })
       .catch(error => {
+        this.checkInternet()
          this.hideLoading();
         console.error('error coming',error)
       })
@@ -376,6 +381,12 @@ console.log('current millsecond',time3month);
      
       )
     }
+    checkInternet=()=>{
+      NetInfo.fetch().then(state => {
+        console.log("Connection type", state.isConnected);
+        this.setState({connected:state.isConnected});
+      });
+    }
   handleBarGraph=(event)=>{
     const obj = event.nativeEvent;
     let value =obj.x;
@@ -395,6 +406,9 @@ console.log('current millsecond',time3month);
     console.log('obj',obj);
   }
   render() {
+    if(!this.state.connected){
+      return(<OfflineUserScreen onTry={this.checkInternet} />)
+         }
     const data = {
         labels: ["Nov", "Dec", "Jan","Feb"], // optional
         data: [0.4, 0.6, 0.8,0.2]

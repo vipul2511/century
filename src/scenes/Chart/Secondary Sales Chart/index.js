@@ -16,10 +16,13 @@ import {LineChart,PieChart,BarChart} from 'react-native-charts-wrapper';
 import resp from 'rn-responsive-font';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {ProgressChart} from 'react-native-chart-kit';
-import { wp, hp } from '../../../utils/heightWidthRatio';
+// import { wp, hp } from '../../../utils/heightWidthRatio';
+import {widthPercentageToDP as wp, heightPercentageToDP as hp} from 'react-native-responsive-screen';
 import { CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {BASE_URL} from '../../../utils/BaseUrl';
+import NetInfo from "@react-native-community/netinfo";
+import OfflineUserScreen from '../../../utils/OfflineScreen';
 let width=Dimensions.get('window').width;
 let height=Dimensions.get('window').height;
 export default class Secondarychart extends React.Component {
@@ -30,10 +33,12 @@ export default class Secondarychart extends React.Component {
         Nodata:false,
         tableData: '',
         zoneid:'',
-        token:''
+        token:'',
+        connected:true
       }
   }
   componentDidMount(){
+    this.checkInternet();
     console.log('the props of chart',JSON.stringify(this.props))
     AsyncStorage.getItem('@zone_id').then(id=>{
       if(id){
@@ -49,9 +54,18 @@ export default class Secondarychart extends React.Component {
       }
     });
   }
+  checkInternet=()=>{
+    NetInfo.fetch().then(state => {
+      console.log("Connection type", state.isConnected);
+      this.setState({connected:state.isConnected});
+    });
+  }
   nodata=()=>{
-    return(<View style={{justifyContent:'center',alignItems:'center',marginTop:hp(45)}}>
-        {this.state.Nodata?<Text>No Data Found</Text>:null}
+    return(
+      <View style={{justifyContent:'center',alignItems:'center',width:width}}>
+    <View style={{justifyContent:'center',alignItems:'center',marginTop:hp('50%')}}>
+        {this.state.Nodata?<Text style={{fontWeight:'bold',fontSize:16}}>No Data Found</Text>:null}
+     </View>
      </View>
     )
  }
@@ -118,6 +132,7 @@ salesReportData=(startdate,enddate)=>{
     })
     .catch(error => {
       //  this.hideLoading();
+      this.checkInternet();
       console.error('error coming',error)
     })
     .done()
@@ -186,7 +201,9 @@ logout=()=>{
   ) 
   }
   render() {
-    
+    if(!this.state.connected){
+      return(<OfflineUserScreen onTry={this.checkInternet} />)
+         }
     return (
        
       <View style={{flex: 1,backgroundColor:'#fff'}}>
@@ -276,7 +293,7 @@ const styles = StyleSheet.create({
     color:'#fff'
   },
   headerView: {
-    height:65,
+    height:10,
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
@@ -286,6 +303,7 @@ const styles = StyleSheet.create({
   },
   BackButtonContainer: {
     // flex: 0.2,
+    height:10,
     marginRight: 10,
     backgroundColor: '#1976D2',
   },

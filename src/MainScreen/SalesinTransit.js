@@ -11,6 +11,8 @@ import { CommonActions } from '@react-navigation/native';
 import CheckBox from 'react-native-check-box';
 import Toast from 'react-native-simple-toast';
 import {BASE_URL} from '../utils/BaseUrl';
+import NetInfo from "@react-native-community/netinfo";
+import OfflineUserScreen from '../utils/OfflineScreen';
 let width = Dimensions.get('window').width;
 export default class SalesinTransit extends Component {
   constructor(props) {
@@ -19,7 +21,7 @@ export default class SalesinTransit extends Component {
       text: "",
       ReportData: [],
       tableHead: ['Head', 'Head2', 'Head3', 'Head4'],
-      tableData: '',
+      tableData: [],
       masterlist: '',
       totalCount: '',
       orgId: '',
@@ -31,6 +33,7 @@ export default class SalesinTransit extends Component {
       spinner: false,
       isChecked: false,
       toids: [],
+      connected:true
     }
     let onEndReached = false;
     this.backItems = this.backItems.bind(this);
@@ -79,6 +82,7 @@ export default class SalesinTransit extends Component {
     }
   };
   componentDidMount() {
+    this.checkInternet();
     AsyncStorage.getItem('@loginToken').then(succ => {
       if (succ) {
         this.setState({ token: succ });
@@ -95,10 +99,10 @@ export default class SalesinTransit extends Component {
       }
     })
     AsyncStorage.getItem('@type').then(succ => {
-      if (succ) {
+      console.log('succ',succ);
+        
         this.setState({ type: succ });
         this.customerReorderDataApi()
-      }
     })
     BackHandler.addEventListener('hardwareBackPressed', this.backItems);
   }
@@ -179,7 +183,7 @@ export default class SalesinTransit extends Component {
               isChecked={inList ? true : false}
             />
           </View>
-          <View style={{ width: wp(150), alignSelf: 'center', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
+          <View style={{ width: wp(200), alignSelf: 'center', flexDirection: 'row', justifyContent: 'center', alignItems: 'center'}}>
             <Text style={{ fontSize: 13, marginLeft: 5, flexWrap: 'wrap', marginBottom: 10, }}>{item.name}</Text>
           </View>
           <View style={{ width: wp(150), alignSelf: 'center', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
@@ -202,7 +206,7 @@ export default class SalesinTransit extends Component {
             </Picker> */}
             <Text style={{ fontSize: 13, flexWrap: 'wrap', marginBottom: 10, textAlign: 'center' }}>{item.pkgunit}</Text>
           </View>
-          <View style={{ width: wp(80), flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
+          {/* <View style={{ width: wp(80), flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
             <Text style={{ fontSize: 13, marginLeft: 15, flexWrap: 'wrap', marginBottom: 10, textAlign: 'left' }}>{item.instockqty}</Text>
           </View>
           <View style={{ width: wp(80), flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }}>
@@ -213,16 +217,15 @@ export default class SalesinTransit extends Component {
           </View>
           <View style={{ width: wp(100), flexDirection: 'row', justifyContent: 'center', alignItems: 'center', }}>
             <Text style={{ fontSize: 13, marginLeft: 15, flexWrap: 'wrap', marginBottom: 10, textAlign: 'left' }}>{item.reorderlevel}</Text>
-          </View>
-          <View style={{ width: wp(130), height: hp(45), flexDirection: 'row', justifyContent: 'center', alignItems: 'center',}}>
-            {/* <Text style={{fontSize:13,marginLeft:15,flexWrap:'wrap',marginBottom:10,textAlign:'left'}}>{item.reorderlevel}</Text> */}
+          </View> */}
+          {/* <View style={{ width: wp(130), height: hp(45), flexDirection: 'row', justifyContent: 'center', alignItems: 'center',}}>
             <TextInput
               style={{ width: wp(80), height: hp(40), borderWidth: 1, borderColor: 'black', marginTop: 3,marginLeft:wp(25),justifyContent:'center',alignItems:'center' }}
               keyboardType="numeric"
               onChangeText={(text) => { this.updateBillingqty(text, index) }}
               value={item.billingQty}
             />
-          </View>
+          </View> */}
         </View>
         <View style={{ borderWidth: 0.5, backgroundColor: 'black' }}></View>
       </View>
@@ -286,7 +289,12 @@ export default class SalesinTransit extends Component {
       this.setState({ tableData: items });
     });
   }
-
+  checkInternet=()=>{
+    NetInfo.fetch().then(state => {
+      console.log("Connection type", state.isConnected);
+      this.setState({connected:state.isConnected});
+    });
+  }
   showLoading() {
     this.setState({ spinner: true })
   }
@@ -301,6 +309,7 @@ export default class SalesinTransit extends Component {
   }
   customerReorderDataApi = () => {
     this.showLoading();
+    // console.log('type',this.props.route.params.dataItem.typecus)
     let orgid = JSON.stringify(this.props.route.params.dataItem.orgid);
     let type = JSON.stringify(this.props.route.params.dataItem.typecus);
     var EditProfileUrl = `${BASE_URL}/dms-demo/mobile-json-data?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&fileDataSource=reorder-invoice-fetch&inputFieldsData={"selEntityId":${JSON.stringify(this.state.orgId)},"selEntityType":${JSON.stringify(this.state.type)},"selZoneId":${JSON.stringify(this.state.zoneid)},"selCustomerType": ${type},"selCustomerId":${orgid},"timeoffset": "330"}`
@@ -321,51 +330,76 @@ export default class SalesinTransit extends Component {
                 let items = [];
                 let obj;
                 responseData.forEach((child) => {
+                  if (Math.sign(child.instockqty) == -1) { billingQty = '0'; }
+                  else {
+                    if (child.reorderlevel != '0' && child.inTransitQty && child.instockqty != "0") {
+                      let numId = Number(child.reorderlevel) - Number(child.inTransitQty) - Number(child.instockqty);
+                      billingQty = JSON.stringify(numId);
+                    }
+                    if (child.reorderlevel != '0' && child.inTransitQty && child.instockqty != "0" && child.bookedqty != "0") {
+                      let numIds = Number(child.reorderlevel) - Number(child.inTransitQty) - Number(child.instockqty) - Number(child.bookedqty);
+                      billingQty = JSON.stringify(numIds);
+                    }
+                    if (child.reorderlevel != '0' && child.instockqty != "0") {
+                      let number = Number(child.reorderlevel) - Number(child.instockqty);
+                      billingQty = JSON.stringify(number);
+                    }
+                    if (child.reorderlevel != '0' && !child.inTransitQty && child.instockqty == "0" && child.bookedqty == "0") {
+                      billingQty = child.reorderlevel;
+                    }
+                  }
                   obj =
                   {
-                    itemdescription: child.itemdescription,
+                    item_description: child.itemdescription,
+                    inTransitQty: child.inTransitQty,
                     bookedqty: child.bookedqty,
                     reorderlevel: child.reorderlevel,
-                    itemname: child.itemname,
+                    name: child.itemname,
                     pkgunit: child.pkgunit,
                     reorderlevel: child.reorderlevel,
                     instockqty: child.instockqty,
-                    billingQty: '0',
+                    billingQty: child.billingQty != '0' ? child.billingQty : billingQty,
                     itemmasterrowkey: child.itemmasterrowkey,
+                    item_group: child.item_group,
                     itemschemeflag: child.itemschemeflag,
                     itemcode: child.itemcode,
-                    item_group: child.itemgroup,
                     pkgunitrate: child.pkgunitrate,
                     iteminfoflag: child.iteminfoflag,
                     itemskuflag: child.itemskuflag,
                     pkgid: child.pkgid,
                     itemskucode:child.itemskucode
                   }
-                  if (child.inTransitQty) {
-                    obj.inTransitQty = child.inTransitQty;
-                  }
                   items.push(obj);
                 });
-                this.customerReorderApi(items);
+                this.setState({ tableData: items });
+                // this.customerReorderApi(items);
                 // console.log(JSON.stringify(responseData));
               } else {
+                this.hideLoading();
                 console.log(responseData)
                 this.setState({ NoData: true })
               }
             } else {
+              this.hideLoading();
               console.log(responseData)
               this.setState({ NoData: true })
             }
           } else {
+            this.hideLoading();
             console.log(responseData)
             this.setState({ NoData: true })
           }
         } else {
+          this.hideLoading();
+          this.setState({ NoData: true })
           this.createTwoButtonAlert()
           console.log(responseData);
         }
       })
       .catch(error => {
+        this.hideLoading();
+        this.checkInternet();
+        // this.setState({ NoData: true })
         console.error('error coming', error)
       })
       .done()
@@ -410,7 +444,7 @@ export default class SalesinTransit extends Component {
     return (
       <View style={{ marginTop: 8, marginBottom: 5, marginLeft: 5, }}>
         {this.state.NoData == false ? <View style={{ flexDirection: 'row', }}>
-          <View style={{ width: wp(150), alignSelf: 'flex-start' }}>
+          <View style={{ width: wp(200), alignSelf: 'flex-start' }}>
             <Text style={{ fontWeight: 'bold', textAlign: 'center' }}>Name</Text></View>
           <View style={{ width: wp(150), alignSelf: 'center',justifyContent:'center',alignItems:'center', marginLeft: 10}}>
             <Text style={{ fontWeight: 'bold', textAlign: 'center', }}>Description</Text></View>
@@ -432,6 +466,9 @@ export default class SalesinTransit extends Component {
     )
   }
   render() {
+    if(!this.state.connected){
+      return(<OfflineUserScreen onTry={this.checkInternet} />)
+         }
     return (
       <View style={styles.container}>
         <View style={styles.headerView}>

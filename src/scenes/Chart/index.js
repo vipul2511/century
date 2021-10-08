@@ -20,6 +20,8 @@ import PropTypes from 'prop-types'
 import Spinner from 'react-native-loading-spinner-overlay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {BASE_URL} from '../../utils/BaseUrl';
+import NetInfo from "@react-native-community/netinfo";
+import OfflineUserScreen from '../../utils/OfflineScreen';
 let width=Dimensions.get('window').width;
 let height=Dimensions.get('window').height;
 export default class Chart extends React.Component {
@@ -30,6 +32,7 @@ export default class Chart extends React.Component {
         orgId:'',
         tenantName:'',
         spinner:false,
+        connected:true,
         fastsalesItem:'',
         mediumSalesItem:'',
         salesfirst:'',
@@ -100,13 +103,19 @@ export default class Chart extends React.Component {
   hideLoading () {
     this.setState({spinner: false})
   }
-
+  checkInternet=()=>{
+    NetInfo.fetch().then(state => {
+      console.log("Connection type", state.isConnected);
+      this.setState({connected:state.isConnected});
+    });
+  }
   componentDidMount(){
+    this.checkInternet();
     console.log('the props of chart',JSON.stringify(this.props));
     AsyncStorage.getItem('@type').then(succ=>{
-      if(succ){
+      console.log('child grapg',succ);
         this.setState({type:succ});
-      }
+
     });
     AsyncStorage.getItem('@tenantName').then(succ=>{
       if(succ){
@@ -151,9 +160,11 @@ export default class Chart extends React.Component {
     })
       .then(response => response.json())
       .then(responseData => {
+        console.log('res',responseData);
         if(responseData!=="Invalid Session"){
           if(responseData!=="No Data Found"){
             if(responseData!="lstDbReportChildEntities is null / empty"){
+             
               let slowArr=responseData.slowFastMoverData.length;
               if(Array.isArray(responseData.reachrangeData)==false){
                 this.setState({value:responseData.reachrangeData.rangePercentage})
@@ -166,6 +177,7 @@ export default class Chart extends React.Component {
                 let nameArray=[]
                 let valuesDate=[]
                 salesGraphData.map((itemData,index)=>{
+                  console.log('item data',itemData);
                   nameArray.push(itemData.month);
                   let obj={
                     y:Math.floor(itemData.salesAmount),
@@ -327,6 +339,7 @@ export default class Chart extends React.Component {
       })
       .catch(error => {
          this.hideLoading();
+         this.checkInternet()
         console.error('error coming',error)
       })
       .done()
@@ -402,6 +415,9 @@ console.log('current millsecond',time3month);
     console.log('obj',obj);
   }
   render() {
+    if(!this.state.connected){
+      return(<OfflineUserScreen onTry={this.checkInternet} />)
+         }
     const data = {
         labels: ["Nov", "Dec", "Jan","Feb"], // optional
         data: [0.4, 0.6, 0.8,0.2]
