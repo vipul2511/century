@@ -262,7 +262,7 @@ this.hideLoading()
             {/* <Text style={{ fontSize: 13, marginLeft: 10, flexWrap: 'wrap', marginBottom: 10 }}>{objItem.instockqty.substring(0, 7) + ".."}</Text> : */}
               <Text style={{ fontSize: 13, marginLeft: 10, flexWrap: 'wrap', marginBottom: 10 }}>{objItem.instockqty}</Text>
           </View>
-          <TouchableOpacity style={{ width: 90, justifyContent:'flex-start',alignItems:'flex-start', flexDirection: 'row' }} onPress={()=>{this.setState({pickerdata:objItem,openModalPicker:true,itemData:item,indexNum:index})}} >
+          <TouchableOpacity style={{ width: 90, justifyContent:'flex-start',alignItems:'flex-start', flexDirection: 'row' }} onPress={()=>{objItem.newValue && objItem.newValue != "" ?this.setState({pickerdata:objItem,openModalPicker:true,itemData:item,indexNum:index}):''}} >
             {objItem.newValue && objItem.newValue != "" ?
             <View style={{flexDirection:'row'}}>
               <Text style={{ fontSize: 13, marginLeft: 10, flexWrap: 'wrap', marginBottom: 10 }}>{objItem.pkgunit}</Text>

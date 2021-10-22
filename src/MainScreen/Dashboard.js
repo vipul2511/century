@@ -158,6 +158,7 @@ class DashBoardScreen extends Component{
       .then(response => response.json())
       .then(responseData => {
         if (responseData !== 'Error - Invalid username / password') {
+
           this.setState({progressStatus: parseInt(80)}); 
           db.insertDataCustomer(responseData.customerDetails.data).then(succ=>{
             db.insertDataTimeCustomer(responseData.customerDetails.totalCount,responseData.customerDetails.serviceTimeMilliSec).then(success=>{
@@ -172,7 +173,7 @@ class DashBoardScreen extends Component{
       })
       .catch(error => {
         this.checkInternet();
-         this.hideLoading();
+        //  this.hideLoading();
         console.error('error coming',error)
       })
       .done()
@@ -202,6 +203,7 @@ createTwoButtonAlert = () =>
         .then(responseData => {
           if (responseData !== 'Error - Invalid username / password') {
             this.setState({progressStatus: parseInt(70)}); 
+            console.log('response of item master ',responseData);
              db.insertDataStock(responseData.stockItems.data).then((data)=>{
               this.setState({progressStatus: parseInt(80),syncingText:`Seems like it's taking more than usual time...Please wait`},()=>{
                 db.insertDataTimeStock(responseData.stockItems.totalCount,responseData.stockItems.serviceTimeMilliSec).then(succ=>{
@@ -215,7 +217,6 @@ createTwoButtonAlert = () =>
           }
         })
         .catch(error => {
-           this.hideLoading();
            this.checkInternet();
           console.error('error coming',error)
         })

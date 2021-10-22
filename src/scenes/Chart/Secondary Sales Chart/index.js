@@ -83,10 +83,11 @@ console.log('current millsecond',time3month);
 this.salesReportData(timebefore3month,time3month);  
 }
 salesReportData=(startdate,enddate)=>{
+  console.log('user data',this.props.route.params.dataItem);
   let startDate=JSON.stringify(startdate);
   let endDate=JSON.stringify(enddate);
   console.log('start date',startDate,'end date',endDate);
-  var EditProfileUrl = `${BASE_URL}/dms-demo/DmsCommonReport?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&reportDataSource=secondary-sales&reportInputFieldsData={"selZoneId":${this.state.zoneid},"childZoneFlag": "true","AllHierarchyFlag": "false","selCustomerType": "All","selCustomerId": "All","selStartDateNum": ${startDate},"selEndDateNum": ${endDate},"fetchDataSource": "report-runtime-data","timeoffset": 330}`
+  var EditProfileUrl = `${BASE_URL}/dms-demo/DmsCommonReport?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&reportDataSource=secondary-sales&reportInputFieldsData={"selZoneId":${this.state.zoneid},"childZoneFlag": "true","AllHierarchyFlag": "false","selCustomerType":${JSON.stringify(this.props.route.params.dataItem.type)},"selCustomerId":${JSON.stringify(this.props.route.params.dataItem.orgid)},"selStartDateNum": ${startDate},"selEndDateNum": ${endDate},"fetchDataSource": "report-runtime-data","timeoffset": 330}`
   console.log('Add product Url:' + EditProfileUrl)
   fetch(EditProfileUrl,  {
     method: 'Post',
@@ -108,7 +109,6 @@ salesReportData=(startdate,enddate)=>{
              entitytypename:item.entitytypename,
              state:item.zonedetails.State,
              city:item.zonedetails.City,
-            //  tenantzonehierarchy:item.zonedetails.Country+','+item.zonedetails.State+','+item.zonedetails.City,
              salesamount:item.salesamount
            }
            arra.push(obj)
@@ -139,7 +139,6 @@ salesReportData=(startdate,enddate)=>{
  
 }
 renderItem = ({ item,index }) =>{
-  console.log('item',item)
  return(
   <View key={index}>
    <TouchableOpacity style={{flexDirection:'row',height:'auto',}} >
@@ -207,7 +206,7 @@ logout=()=>{
     return (
        
       <View style={{flex: 1,backgroundColor:'#fff'}}>
-        <View style={styles.headerView}>
+        {/* <View style={styles.headerView}>
           <View style={styles.BackButtonContainer}>
            
           <Ionicons name="arrow-back"  size={25} color={"#fff"} onPress={()=>{this.props.navigation.goBack()}} />
@@ -216,7 +215,7 @@ logout=()=>{
           <View style={styles.TitleContainer}>
           {this.state.Nodata==false?<View>
                <TextInput placeholder="Search" style={{backgroundColor:'#fff',width:wp(250),height:hp(50)}} onChangeText={(text)=>{this.searchFilterFunction(text)}}    />
-            </View>:<View style={{flex:0.6}}>
+            </View>:<View style={{flex:0.2}}>
               <Text style={styles.TitleStyle}>i9 Sales Force</Text>
             </View>}
           </View>
@@ -227,7 +226,29 @@ logout=()=>{
             }}>
                 <Ionicons name="home"  size={25} color={"#fff"} onPress={()=>{this.props.navigation.navigate('DashBoardScreen')}} />
           </TouchableOpacity>
+          </View> */}
+          <View style={styles.headerView}>
+          <View style={styles.BackButtonContainer}>
+
+          <Ionicons name="arrow-back"  size={25} color={"#fff"} onPress={()=>{this.props.navigation.goBack()}} />
+
           </View>
+          <View style={styles.TitleContainer}>
+            {this.state.NoData == false ? <View>
+              <TextInput placeholder="Search" style={{ backgroundColor: '#fff', width: wp(250), height: hp(50) }} onChangeText={(text) => { this.searchFilterFunction(text) }} />
+            </View> : <View >
+              <Text style={styles.TitleStyle}>{this.props.route.params.dataItem.name}</Text>
+            </View>}
+          </View>
+          <TouchableOpacity
+            style={styles.SearchContainer}
+            onPress={() => {
+              this.props.navigation.navigate('DashBoardScreen')
+            }}>
+                <Ionicons name="home"  size={25} color={"#fff"} onPress={()=>{this.props.navigation.navigate('DashBoardScreen')}} />
+          </TouchableOpacity>
+        </View>
+
           <ScrollView horizontal={true}>
           <FlatList
          keyExtractor={(item, index) => index.toString()} 
@@ -277,8 +298,8 @@ const styles = StyleSheet.create({
       marginRight:10
   },
   SearchContainer: {
-    // flex: 0.1,
-    marginLeft:15,
+    flex: 0.1,
+    marginLeft: 15,
     backgroundColor: '#1976D2',
   },
   LogoIconStyle: {
@@ -287,13 +308,13 @@ const styles = StyleSheet.create({
     width: 30,
   },
   backButtonStyle: {
-    margin: 10,
+    margin: 5,
     height: 20,
     width: 80,
-    color:'#fff'
+    color: '#fff'
   },
   headerView: {
-    height:10,
+    height: 65,
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
@@ -302,14 +323,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   BackButtonContainer: {
-    // flex: 0.2,
-    height:10,
+    flex: 0.2,
     marginRight: 10,
     backgroundColor: '#1976D2',
   },
   TitleContainer: {
     flexDirection: 'row',
-    // flex: 0.6,
+    flex: 0.57,
     backgroundColor: '#1976D2',
     alignItems: 'center',
     justifyContent: 'center',

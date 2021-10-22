@@ -192,7 +192,6 @@ db.retrieveCustomer().then(table=>{
     let items = [];
     let objArr = [];
     table.forEach((child) => {
-        console.log('chuld',child);
         let obj =
         {
             itemmasterrowkey: child.itemmasterrowkey,
@@ -222,7 +221,7 @@ db.retrieveCustomer().then(table=>{
             newArr.push(items);
         }
     });
-    this.setState({ tableData: items, masterlist: newArr, loading: false });
+    this.setState({ tableData: newArr, masterlist: newArr, loading: false });
     // console.log('report', this.state.tableData.length);
     // console.log('re loaded');
 });
@@ -255,7 +254,7 @@ hideLoading() {
 createOrderApi = () => {
             this.showLoading();
             let rawData = JSON.stringify({
-                customertype: this.props.route.params.dataItem.typecus,
+                customertype: this.props.route.params.dataItem.type,
                 customerid: this.props.route.params.dataItem.orgid,
                 customername: this.props.route.params.dataItem.name,
                 routeid: '',
@@ -264,14 +263,15 @@ createOrderApi = () => {
                 userid: this.state.user_id.userid,
                 orgid: this.state.orgId,
                 orgname: this.state.user_id.orgName,
-                orgtype: "superstockist",
+                orgtype: this.state.type,
                 type: "SalesOrder",
                 miscellaneouscharges: {},
                 failedorder: JSON.stringify(this.state.isChecked),
                 lineitem: this.state.gstTable
             });
-            var EditProfileUrl = `${BASE_URL}/dms-demo//mobile-json-data?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&fileDataSource=salesorder-create&inputFieldsData={"selEntityId":${JSON.stringify(this.state.orgId)},"selEntityType":${JSON.stringify(this.state.type)},"timeoffset": "330"}`
-            console.log('Add product Url:' + EditProfileUrl, 'raw data', rawData);
+            let time=330
+            var EditProfileUrl = `${BASE_URL}/dms-demo/mobile-json-data?logintoken=${this.state.token}&sourcetype=AndroidSalesPersonApp&fileDataSource=salesorder-create&inputFieldsData={"selEntityId":${JSON.stringify(this.state.orgId)},"selEntityType":${JSON.stringify(this.state.type)},"timeoffset": ${JSON.stringify(time)}}`
+            // console.log('Add product Url:' + EditProfileUrl, 'raw data', rawData);
             fetch(EditProfileUrl, {
                 method: 'Post',
                 headers: {
@@ -295,11 +295,6 @@ createOrderApi = () => {
                 .catch(error => {
                     this.hideLoading();
                     Toast.show('Sales Order Not Created.');
-                    // if (this.state.fromPervious == false) {
-                    //     this.props.navigation.navigate('BPR', { dataItem: this.props.route.params.dataItem });
-                    // } else {
-                    //     this.props.navigation.navigate('SalesinTransit', { dataItem: this.props.route.params.dataItem });
-                    // }
                     console.error('error coming', error)
                 })
                 .done()
